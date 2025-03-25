@@ -45,6 +45,9 @@
 #include <moveit_py/moveit_py_utils/ros_msg_typecasters.hpp>
 #include <moveit/moveit_cpp/moveit_cpp.hpp>
 #include <moveit/moveit_cpp/planning_component.hpp>
+#include <moveit/planning_interface/planning_response.hpp>
+#include <moveit/planning_pipeline_interfaces/planning_pipeline_interfaces.hpp>
+#include <moveit/planning_pipeline_interfaces/solution_selection_functions.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include "planning_component.hpp"
