@@ -59,7 +59,13 @@ namespace moveit_py
 namespace bind_planning_component
 {
 planning_interface::MotionPlanResponse
+planNoGIL(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
+          std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr,
+          std::shared_ptr<moveit_cpp::PlanningComponent::PlanRequestParameters>& parameters);
+
+planning_interface::MotionPlanResponse
 plan(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
+     std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr,
      std::shared_ptr<moveit_cpp::PlanningComponent::PlanRequestParameters>& single_plan_parameters,
      std::shared_ptr<moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters>& multi_plan_parameters,
      std::shared_ptr<planning_scene::PlanningScene>& planning_scene,

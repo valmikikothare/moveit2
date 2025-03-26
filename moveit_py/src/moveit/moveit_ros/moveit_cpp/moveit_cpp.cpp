@@ -52,60 +52,6 @@ getPlanningComponent(std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr, con
   return std::make_shared<moveit_cpp::PlanningComponent>(planning_component, moveit_cpp_ptr);
 }
 
-planning_interface::MotionPlanResponse
-plan(std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr,
-     std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-     std::shared_ptr<moveit_cpp::PlanningComponent::PlanRequestParameters>& parameters)
-{
-  auto group_name = planning_component->getPlanningGroupName();
-  auto robot_model = moveit_cpp_ptr->getRobotModel();
-
-  auto plan_solution = planning_interface::MotionPlanResponse();
-
-  auto joint_model_group = robot_model->getJointModelGroup(group_name);
-  // check if joint_model_group exists
-  if (!joint_model_group)
-  {
-    RCLCPP_ERROR(getLogger(), "Failed to retrieve joint model group for name '%s'.", group_name.c_str());
-    plan_solution.error_code = moveit::core::MoveItErrorCode::INVALID_GROUP_NAME;
-    return plan_solution;
-  }
-
-  // // Check if goal constraints exist
-  // if (planning_component->getCurrentGoalConstraints().empty())
-  // {
-  //   RCLCPP_ERROR(getLogger(), "No goal constraints set for planning request");
-  //   plan_solution.error_code = moveit::core::MoveItErrorCode::INVALID_GOAL_CONSTRAINTS;
-  //   return plan_solution;
-  // }
-
-  // Clone planning scene
-  auto planning_scene_monitor = moveit_cpp_ptr->getPlanningSceneMonitorNonConst();
-  planning_scene_monitor->updateFrameTransforms();
-  auto planning_scene = [planning_scene_monitor] {
-    planning_scene_monitor::LockedPlanningSceneRO ls(planning_scene_monitor);
-    return planning_scene::PlanningScene::clone(ls);
-  }();
-  planning_scene_monitor.reset();  // release this pointer
-
-  // Init MotionPlanRequest
-  std::shared_ptr<const moveit_cpp::PlanningComponent::PlanRequestParameters> const_parameters =
-      std::const_pointer_cast<const moveit_cpp::PlanningComponent::PlanRequestParameters>(parameters);
-  ::planning_interface::MotionPlanRequest request = planning_component->getMotionPlanRequest(*const_parameters);
-
-  // Set start state
-  planning_scene->setCurrentState(request.start_state);
-
-  // Get all pipelines
-  auto pipelines = moveit_cpp_ptr->getPlanningPipelines();
-
-  // Release GIL to allow for true multi-threading
-  py::gil_scoped_release release;
-
-  // Run planning attempt
-  return moveit::planning_pipeline_interfaces::planWithSinglePipeline(request, planning_scene, pipelines);
-}
-
 void initMoveitPy(py::module& m)
 {
   auto utils = py::module::import("moveit.utils");
@@ -195,11 +141,6 @@ void initMoveitPy(py::module& m)
            py::return_value_policy::take_ownership,
            R"(
            Initialize moveit_cpp node and the planning scene service.
-           )")
-      .def("plan", &moveit_py::bind_moveit_cpp::plan, py::arg("planning_component"), py::arg("parameters"),
-           py::return_value_policy::move,
-           R"(
-           Plan a trajectory given a planning component and parameters.
            )")
       .def("execute",
            py::overload_cast<const robot_trajectory::RobotTrajectoryPtr&, const std::vector<std::string>&>(
