@@ -54,7 +54,7 @@ planNoGIL(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
   auto group_name = planning_component->getPlanningGroupName();
   auto robot_model = moveit_cpp_ptr->getRobotModel();
 
-  RCLCPP_INFO(getLogger(), "Planning component: %s", group_name.c_str());
+  RCLCPP_DEBUG(getLogger(), "Planning component: %s", group_name.c_str());
 
   auto plan_solution = planning_interface::MotionPlanResponse();
 
