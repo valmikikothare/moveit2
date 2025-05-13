@@ -127,7 +127,17 @@ void initRobotTrajectory(py::module& m)
            R"(
            Unwind the trajectory.
            )")
+      .def("append", &robot_trajectory::RobotTrajectory::append, py::arg("source"), py::arg("dt"),
+           py::arg("start_index") = 0, py::arg("end_index") = std::numeric_limits<size_t>::max(),
+           R"(
+           Append a trajectory to the end of the current trajectory.
 
+           Args:
+               source (:py:class:`moveit_py.core.RobotTrajectory`): The trajectory to append.
+               dt (float): The time step to use for the new trajectory.
+               start_index (int): The index of the first waypoint to append.
+               end_index (int): The index of the last waypoint to append.
+           )")
       .def("get_waypoint_durations", &robot_trajectory::RobotTrajectory::getWayPointDurations,
            R"(
            Get the durations from the previous waypoint in the trajectory.
