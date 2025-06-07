@@ -58,6 +58,11 @@ setRobotTrajectoryMsg(const std::shared_ptr<robot_trajectory::RobotTrajectory>& 
   return robot_trajectory->setRobotTrajectoryMsg(robot_state, msg);
 }
 
+bool lessThan(const robot_trajectory::RobotTrajectory& self, const robot_trajectory::RobotTrajectory& other)
+{
+  return robot_trajectory::pathLength(self) < robot_trajectory::pathLength(other);
+}
+
 void initRobotTrajectory(py::module& m)
 {
   py::module robot_trajectory = m.def_submodule("robot_trajectory");
@@ -90,16 +95,18 @@ void initRobotTrajectory(py::module& m)
           R"(
            Iterate over the waypoints in the trajectory.
            )")
-
       .def("__len__", &robot_trajectory::RobotTrajectory::getWayPointCount,
            R"(
 	   Returns:
 	       int: The number of waypoints in the trajectory.
                     )")
-
       .def("__reverse__", &robot_trajectory::RobotTrajectory::reverse,
            R"(
            Reverse the trajectory.
+           )")
+      .def("__lt__", &moveit_py::bind_robot_trajectory::lessThan, py::arg("other"),
+           R"(
+           Compare two trajectories.
            )")
 
       .def_property("joint_model_group_name", &robot_trajectory::RobotTrajectory::getGroupName,
@@ -121,6 +128,10 @@ void initRobotTrajectory(py::module& m)
       .def_property("average_segment_duration", &robot_trajectory::RobotTrajectory::getAverageSegmentDuration, nullptr,
                     R"(
                     float: The average duration of the segments in the trajectory.
+                    )")
+      .def_property("path_length", &robot_trajectory::pathLength, nullptr,
+                    R"(
+                    float: The length of the path.
                     )")
 
       .def("unwind", py::overload_cast<>(&robot_trajectory::RobotTrajectory::unwind),
