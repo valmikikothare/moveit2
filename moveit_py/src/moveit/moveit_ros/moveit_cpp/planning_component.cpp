@@ -86,10 +86,10 @@ planNoGIL(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
     }();
     planning_scene_monitor.reset();  // release this pointer}
   }
-  else
-  {
-    planning_scene = planning_scene::PlanningScene::clone(planning_scene);
-  }
+  // else
+  // {
+  //   planning_scene = planning_scene::PlanningScene::clone(planning_scene);
+  // }
 
   // Init MotionPlanRequest
   std::shared_ptr<const moveit_cpp::PlanningComponent::PlanRequestParameters> const_parameters =
