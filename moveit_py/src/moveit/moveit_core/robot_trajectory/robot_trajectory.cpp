@@ -100,10 +100,6 @@ void initRobotTrajectory(py::module& m)
 	   Returns:
 	       int: The number of waypoints in the trajectory.
                     )")
-      .def("__reverse__", &robot_trajectory::RobotTrajectory::reverse,
-           R"(
-           Reverse the trajectory.
-           )")
       .def("__lt__", &moveit_py::bind_robot_trajectory::lessThan, py::arg("other"),
            R"(
            Compare two trajectories.
@@ -137,6 +133,10 @@ void initRobotTrajectory(py::module& m)
       .def("unwind", py::overload_cast<>(&robot_trajectory::RobotTrajectory::unwind),
            R"(
            Unwind the trajectory.
+           )")
+      .def("reverse", &robot_trajectory::RobotTrajectory::reverse,
+           R"(
+           Reverse the trajectory.
            )")
       .def("append", &robot_trajectory::RobotTrajectory::append, py::arg("source"), py::arg("dt"),
            py::arg("start_index") = 0, py::arg("end_index") = std::numeric_limits<size_t>::max(),
