@@ -509,7 +509,7 @@ void initRobotState(py::module& m)
 
              Args:
 	         force (bool): when true forces the update of the transforms from scratch.
-		 category (str): specifies the category to update. All indicates updating all transforms while "links_only" and "collisions_only" ensure that only links or collision transforms are updated. )");
+		 type (str): specifies the category to update. All indicates updating all transforms while "links_only" and "collisions_only" ensure that only links or collision transforms are updated. )");
 }
 }  // namespace bind_robot_state
 }  // namespace moveit_py
