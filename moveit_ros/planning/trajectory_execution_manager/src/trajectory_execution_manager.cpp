@@ -101,7 +101,9 @@ void TrajectoryExecutionManager::initialize()
   execution_duration_monitoring_ = true;
   execution_velocity_scaling_ = 1.0;
   allowed_start_tolerance_ = 0.01;
+  allowed_stop_tolerance_ = 0.01;
   allowed_start_tolerance_joints_.clear();
+  allowed_stop_tolerance_joints_.clear();
   wait_for_trajectory_completion_ = true;
   control_multi_dof_joint_variables_ = DEFAULT_CONTROL_MULTI_DOF_JOINT_VARIABLES;
 
@@ -212,10 +214,12 @@ void TrajectoryExecutionManager::initialize()
   controller_mgr_node_->get_parameter("trajectory_execution.allowed_goal_duration_margin",
                                       allowed_goal_duration_margin_);
   controller_mgr_node_->get_parameter("trajectory_execution.allowed_start_tolerance", allowed_start_tolerance_);
+  controller_mgr_node_->get_parameter("trajectory_execution.allowed_stop_tolerance", allowed_stop_tolerance_);
   controller_mgr_node_->get_parameter("trajectory_execution.control_multi_dof_joint_variables",
                                       control_multi_dof_joint_variables_);
 
   initializeAllowedStartToleranceJoints();
+  initializeAllowedEndToleranceJoints();
 
   if (manage_controllers_)
   {
@@ -252,9 +256,17 @@ void TrajectoryExecutionManager::initialize()
       {
         setAllowedStartTolerance(parameter.as_double());
       }
+      else if (name == "trajectory_execution.allowed_stop_tolerance")
+      {
+        setAllowedEndTolerance(parameter.as_double());
+      }
       else if (name.find("trajectory_execution.allowed_start_tolerance_joints.") == 0)
       {
         setAllowedStartToleranceJoint(name, parameter.as_double());
+      }
+      else if (name.find("trajectory_execution.allowed_stop_tolerance_joints.") == 0)
+      {
+        setAllowedEndToleranceJoint(name, parameter.as_double());
       }
       else if (name == "trajectory_execution.wait_for_trajectory_completion")
       {
@@ -318,6 +330,16 @@ void TrajectoryExecutionManager::setAllowedStartTolerance(double tolerance)
 double TrajectoryExecutionManager::allowedStartTolerance() const
 {
   return allowed_start_tolerance_;
+}
+
+void TrajectoryExecutionManager::setAllowedEndTolerance(double tolerance)
+{
+  allowed_stop_tolerance_ = tolerance;
+}
+
+double TrajectoryExecutionManager::allowedEndTolerance() const
+{
+  return allowed_stop_tolerance_;
 }
 
 void TrajectoryExecutionManager::setWaitForTrajectoryCompletion(bool flag)
@@ -1347,7 +1369,11 @@ void TrajectoryExecutionManager::executeThread(const ExecutionCompleteCallback& 
     std::scoped_lock slock(execution_state_mutex_);
     if (!execution_complete_)
     {
-      waitForRobotToStop(*trajectories_[i - 1]);
+      if (!waitForRobotToStop(*trajectories_[i - 1]))
+      {
+        RCLCPP_ERROR(logger_, "Robot did not stop moving");
+        last_execution_status_ = moveit_controller_manager::ExecutionStatus::TIMED_OUT;
+      }
     }
   }
 
@@ -1598,52 +1624,86 @@ bool TrajectoryExecutionManager::executePart(std::size_t part_index)
 bool TrajectoryExecutionManager::waitForRobotToStop(const TrajectoryExecutionContext& context, double wait_time)
 {
   // skip waiting for convergence?
-  if ((allowed_start_tolerance_ == 0 && allowed_start_tolerance_joints_.empty()) || !wait_for_trajectory_completion_)
+  if ((allowed_stop_tolerance_ == 0 && allowed_stop_tolerance_joints_.empty()) || !wait_for_trajectory_completion_)
   {
     RCLCPP_INFO(logger_, "Not waiting for trajectory completion");
     return true;
   }
 
+  // log the allowed end tolerance
+  if (allowed_stop_tolerance_joints_.empty())
+  {
+    RCLCPP_INFO_STREAM(logger_, "Waiting for robot to stop with allowed_stop_tolerance " << allowed_stop_tolerance_);
+  }
+  else
+  {
+    std::ostringstream ss;
+    for (const auto& [joint_name, joint_stop_tolerance] : allowed_stop_tolerance_joints_)
+    {
+      if (ss.tellp() > 1)
+        ss << ", ";  // skip the comma at the end
+      ss << joint_name << ": " << joint_stop_tolerance;
+    }
+    RCLCPP_INFO_STREAM(logger_, "Waiting for robot to stop with allowed_stop_tolerance "
+                                    << allowed_stop_tolerance_ << " and allowed_stop_tolerance_joints {" << ss.str()
+                                    << "}");
+  }
+
+  typedef std::chrono::duration<double> duration;
   auto start = std::chrono::system_clock::now();
+  auto prev = start;
   double time_remaining = wait_time;
 
   moveit::core::RobotStatePtr prev_state, cur_state;
   prev_state = csm_->getCurrentState();
   prev_state->enforceBounds();
 
-  // assume robot stopped when 3 consecutive checks yield the same robot state
+  // assume robot stopped when 3 consecutive joint velocity checks are below the stop tolerance
   unsigned int no_motion_count = 0;  // count iterations with no motion
   while (time_remaining > 0. && no_motion_count < 3)
   {
+    // sleep for 10ms to avoid busy-waiting
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    // get the current state
     if (!csm_->waitForCurrentState(node_->now(), time_remaining) || !(cur_state = csm_->getCurrentState()))
     {
       RCLCPP_WARN(logger_, "Failed to receive current joint state");
       return false;
     }
     cur_state->enforceBounds();
-    std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start;
-    time_remaining = wait_time - elapsed_seconds.count();  // remaining wait_time
+
+    // compute the remaining wait time
+    auto now = std::chrono::system_clock::now();
+    time_remaining = wait_time - (std::chrono::duration_cast<duration>(now - start).count());  // remaining wait_time
+
+    // compute the time difference between the current and previous state for velocity calculation
+    double dt = (std::chrono::duration_cast<duration>(now - prev).count());
+    prev = now;
 
     // check for motion in effected joints of execution context
     bool moved = false;
-    for (const auto& trajectory : context.trajectory_parts_)
+    for (std::size_t i = 0; i < context.trajectory_parts_.size() && !moved; ++i)
     {
+      const auto& trajectory = context.trajectory_parts_[i];
       const std::vector<std::string>& joint_names = trajectory.joint_trajectory.joint_names;
       const std::size_t n = joint_names.size();
+      std::vector<double> velocities(n, -1.0);
 
       for (std::size_t i = 0; i < n && !moved; ++i)
       {
         const moveit::core::JointModel* jm = robot_model_->getJointOfVariable(joint_names[i]);
         if (!jm)
+        {
+          RCLCPP_WARN(logger_, "Joint %s vanished from robot state (shouldn't happen)", joint_names[i].c_str());
           continue;  // joint vanished from robot state (shouldn't happen), but we don't care
-
-        const double joint_start_tolerance = getAllowedStartToleranceJoint(joint_names[i]);
-        if (fabs(jm->distance(cur_state->getJointPositions(jm), prev_state->getJointPositions(jm))) >
-            joint_start_tolerance)
+        }
+        const double joint_stop_tolerance = getAllowedEndToleranceJoint(joint_names[i]);
+        velocities[i] = fabs(jm->distance(cur_state->getJointPositions(jm), prev_state->getJointPositions(jm))) / dt;
+        if (velocities[i] > joint_stop_tolerance)
         {
           moved = true;
           no_motion_count = 0;
-          break;
         }
       }
     }
@@ -1654,7 +1714,16 @@ bool TrajectoryExecutionManager::waitForRobotToStop(const TrajectoryExecutionCon
     std::swap(prev_state, cur_state);
   }
 
-  return time_remaining > 0;
+  if (time_remaining > 0)
+  {
+    RCLCPP_INFO(logger_, "Robot stopped after %f seconds", wait_time - time_remaining);
+    return true;
+  }
+  else
+  {
+    RCLCPP_ERROR(logger_, "Robot did not stop moving after %f seconds", wait_time);
+    return false;
+  }
 }
 
 std::pair<int, int> TrajectoryExecutionManager::getCurrentExpectedTrajectoryIndex() const
@@ -1872,6 +1941,13 @@ double TrajectoryExecutionManager::getAllowedStartToleranceJoint(const std::stri
                                                                        allowed_start_tolerance_;
 }
 
+double TrajectoryExecutionManager::getAllowedEndToleranceJoint(const std::string& joint_name) const
+{
+  auto stop_tolerance_it = allowed_stop_tolerance_joints_.find(joint_name);
+  return stop_tolerance_it != allowed_stop_tolerance_joints_.end() ? stop_tolerance_it->second :
+                                                                     allowed_stop_tolerance_;
+}
+
 void TrajectoryExecutionManager::setAllowedStartToleranceJoint(const std::string& parameter_name,
                                                                double joint_start_tolerance)
 {
@@ -1900,6 +1976,34 @@ void TrajectoryExecutionManager::setAllowedStartToleranceJoint(const std::string
   allowed_start_tolerance_joints_.insert_or_assign(joint_name, joint_start_tolerance);
 }
 
+void TrajectoryExecutionManager::setAllowedEndToleranceJoint(const std::string& parameter_name,
+                                                             double joint_stop_tolerance)
+{
+  if (joint_stop_tolerance < 0)
+  {
+    RCLCPP_WARN(logger_, "%s has a negative value. The end velocity tolerance value for that joint was not updated.",
+                parameter_name.c_str());
+    return;
+  }
+
+  // get the joint name by removing the parameter prefix if necessary
+  std::string joint_name = parameter_name;
+  const std::string parameter_prefix = "trajectory_execution.allowed_stop_tolerance_joints.";
+  if (parameter_name.find(parameter_prefix) == 0)
+    joint_name = joint_name.substr(parameter_prefix.length());  // remove prefix
+
+  if (!robot_model_->hasJointModel(joint_name))
+  {
+    RCLCPP_WARN(logger_,
+                "Joint '%s' was not found in the robot model. "
+                "The end velocity tolerance value for that joint was not updated.",
+                joint_name.c_str());
+    return;
+  }
+
+  allowed_stop_tolerance_joints_.insert_or_assign(joint_name, joint_stop_tolerance);
+}
+
 void TrajectoryExecutionManager::initializeAllowedStartToleranceJoints()
 {
   allowed_start_tolerance_joints_.clear();
@@ -1921,6 +2025,31 @@ void TrajectoryExecutionManager::initializeAllowedStartToleranceJoints()
         continue;
       }
       allowed_start_tolerance_joints_.insert({ joint_name, joint_start_tolerance });
+    }
+  }
+}
+
+void TrajectoryExecutionManager::initializeAllowedEndToleranceJoints()
+{
+  allowed_stop_tolerance_joints_.clear();
+
+  // retrieve all parameters under "trajectory_execution.allowed_stop_tolerance_joints"
+  // that correspond to existing joints in the robot model
+  for (const auto& joint_name : robot_model_->getJointModelNames())
+  {
+    double joint_stop_tolerance;
+    const std::string parameter_name = "trajectory_execution.allowed_stop_tolerance_joints." + joint_name;
+    if (node_->get_parameter(parameter_name, joint_stop_tolerance))
+    {
+      if (joint_stop_tolerance < 0)
+      {
+        RCLCPP_WARN(logger_,
+                    "%s has a negative value. The end tolerance value for that joint "
+                    "will default to allowed_stop_tolerance.",
+                    parameter_name.c_str());
+        continue;
+      }
+      allowed_stop_tolerance_joints_.insert({ joint_name, joint_stop_tolerance });
     }
   }
 }
