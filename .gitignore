@@ -51,7 +51,7 @@ qtcreator-*
 .#*
 
 # VSCode
-.vscode
+# .vscode
 
 # Vim
 *.swp
