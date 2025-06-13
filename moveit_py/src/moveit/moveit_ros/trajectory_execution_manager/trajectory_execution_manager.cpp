@@ -264,6 +264,15 @@ void initTrajectoryExecutionManager(py::module& m)
            R"(
            Get the current joint-value for validating trajectory's start point against current robot state.
            )")
+      .def("set_allowed_stop_tolerance",
+           &trajectory_execution_manager::TrajectoryExecutionManager::setAllowedEndTolerance, py::arg("tolerance"),
+           R"(
+           Set joint-value tolerance for validating trajectory's end point against current robot state.
+           )")
+      .def("allowed_stop_tolerance", &trajectory_execution_manager::TrajectoryExecutionManager::allowedEndTolerance,
+           R"(
+           Get the current joint-value tolerance for validating trajectory's end point against current robot state.
+           )")
 
       .def("set_wait_for_trajectory_completion",
            &trajectory_execution_manager::TrajectoryExecutionManager::setWaitForTrajectoryCompletion, py::arg("flag"),

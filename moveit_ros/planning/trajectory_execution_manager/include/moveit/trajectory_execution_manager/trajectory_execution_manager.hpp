@@ -220,6 +220,12 @@ public:
   /// Get the current joint-value for validating trajectory's start point against current robot state.
   double allowedStartTolerance() const;
 
+  /// Set joint-value tolerance for validating trajectory's end point against current robot state
+  void setAllowedEndTolerance(double tolerance);
+
+  /// Get the current joint-value tolerance for validating trajectory's end point against current robot state.
+  double allowedEndTolerance() const;
+
   /// Enable or disable waiting for trajectory completion
   void setWaitForTrajectoryCompletion(bool flag);
 
@@ -293,8 +299,11 @@ private:
   void loadControllerParams();
 
   double getAllowedStartToleranceJoint(const std::string& joint_name) const;
+  double getAllowedEndToleranceJoint(const std::string& joint_name) const;
   void setAllowedStartToleranceJoint(const std::string& joint_name, double joint_start_tolerance);
+  void setAllowedEndToleranceJoint(const std::string& joint_name, double joint_stop_tolerance);
   void initializeAllowedStartToleranceJoints();
+  void initializeAllowedEndToleranceJoints();
 
   // Name of this class for logging
   const std::string name_ = "trajectory_execution_manager";
@@ -344,8 +353,10 @@ private:
   std::map<std::string, double> controller_allowed_goal_duration_margin_;
 
   double allowed_start_tolerance_;  // joint tolerance for validate(): radians for revolute joints
+  double allowed_stop_tolerance_;   // joint tolerance for validate(): radians for revolute joints
   // tolerance per joint, overrides global allowed_start_tolerance_.
   std::map<std::string, double> allowed_start_tolerance_joints_;
+  std::map<std::string, double> allowed_stop_tolerance_joints_;
   double execution_velocity_scaling_;
   bool wait_for_trajectory_completion_;
 
