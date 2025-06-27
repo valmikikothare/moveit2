@@ -141,6 +141,7 @@ void initPlanningScene(py::module& m)
                     py::return_value_policy::move)
 
       .def_property("transforms", py::overload_cast<>(&planning_scene::PlanningScene::getTransforms), nullptr)
+
       .def_property("allowed_collision_matrix", &planning_scene::PlanningScene::getAllowedCollisionMatrix,
                     &planning_scene::PlanningScene::setAllowedCollisionMatrix,
                     py::return_value_policy::reference_internal)
@@ -153,6 +154,29 @@ void initPlanningScene(py::module& m)
            [](const planning_scene::PlanningScene* self, py::dict /* memo */) {  // NOLINT
              return planning_scene::PlanningScene::clone(self->shared_from_this());
            })
+
+      .def("set_planning_scene_diff_msg", &planning_scene::PlanningScene::setPlanningSceneDiffMsg, py::arg("scene_msg"),
+           R"(
+           Set the planning scene diff message.
+
+           Args:
+               scene_msg (:py:class:`moveit_msgs.msg.PlanningScene`): The planning scene message to set.
+
+           Returns:
+               bool: True if the planning scene was set successfully, false otherwise.
+           )")
+
+      .def("set_planning_scene_msg", &planning_scene::PlanningScene::setPlanningSceneMsg, py::arg("scene_msg"),
+           R"(
+           Set the planning scene message.
+
+           Args:
+               scene_msg (:py:class:`moveit_msgs.msg.PlanningScene`): The planning scene message to set.
+
+           Returns:
+               bool: True if the planning scene was set successfully, false otherwise.
+           )")
+
       .def("knows_frame_transform",
            py::overload_cast<const moveit::core::RobotState&, const std::string&>(
                &planning_scene::PlanningScene::knowsFrameTransform, py::const_),
