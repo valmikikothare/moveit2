@@ -8,7 +8,7 @@
         "/root/ws/install/drive_base_msgs/lib/python3.12/site-packages",
         "/opt/ros/jazzy/lib/python3.12/site-packages"
     ],
-    "python.analysis.extraPaths": [
+    "cursorpyright.analysis.extraPaths": [
         "/root/ws/install/moveit_py/lib/python3.12/site-packages",
         "/root/ws/install/moveit_msgs/lib/python3.12/site-packages",
         "/root/ws/build/moveit_configs_utils",
