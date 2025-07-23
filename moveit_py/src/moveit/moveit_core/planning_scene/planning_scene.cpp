@@ -97,6 +97,19 @@ moveit_msgs::msg::PlanningScene getPlanningSceneMsg(std::shared_ptr<planning_sce
   return planning_scene_msg;
 }
 
+void allocateCollisionDetector(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
+                               const std::string& collision_detector)
+{
+  if (collision_detector == "bullet")
+    planning_scene->allocateCollisionDetector(collision_detection::CollisionDetectorAllocatorBullet::create());
+  else if (collision_detector == "fcl")
+    planning_scene->allocateCollisionDetector(collision_detection::CollisionDetectorAllocatorFCL::create());
+  else if (collision_detector == "all_valid")
+    planning_scene->allocateCollisionDetector(collision_detection::CollisionDetectorAllocatorAllValid::create());
+  else
+    throw std::invalid_argument("Invalid collision detector name: " + collision_detector);
+}
+
 void initPlanningScene(py::module& m)
 {
   py::module planning_scene = m.def_submodule("planning_scene");
@@ -359,6 +372,14 @@ void initPlanningScene(py::module& m)
 
       // TODO (peterdavidfagan): remove collision result from input parameters and write separate binding code.
       // TODO (peterdavidfagan): consider merging check_collision and check_collision_unpadded into one function with unpadded_param
+      .def("allocate_collision_detector", &moveit_py::bind_planning_scene::allocateCollisionDetector,
+           py::arg("collision_detector"),
+           R"(
+           Set the collision detector.
+
+           Args:
+               collision_detector (str): The name of the collision detector to set.
+           )")
       .def("check_collision",
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&>(
                &planning_scene::PlanningScene::checkCollision),
