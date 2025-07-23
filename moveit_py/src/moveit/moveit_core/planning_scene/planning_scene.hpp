@@ -41,6 +41,9 @@
 #include <pybind11/stl.h>
 #include <moveit_py/moveit_py_utils/copy_ros_msg.hpp>
 #include <moveit_py/moveit_py_utils/ros_msg_typecasters.hpp>
+#include <moveit/collision_detection_bullet/collision_detector_allocator_bullet.hpp>
+#include <moveit/collision_detection_fcl/collision_detector_allocator_fcl.hpp>
+#include <moveit/collision_detection/allvalid/collision_detector_allocator_allvalid.hpp>
 #include <moveit/planning_scene/planning_scene.hpp>
 
 namespace py = pybind11;
@@ -56,6 +59,9 @@ void applyCollisionObject(std::shared_ptr<planning_scene::PlanningScene>& planni
 Eigen::MatrixXd getFrameTransform(std::shared_ptr<planning_scene::PlanningScene>& planning_scene, const std::string& id);
 
 moveit_msgs::msg::PlanningScene getPlanningSceneMsg(std::shared_ptr<planning_scene::PlanningScene>& planning_scene);
+
+void allocateCollisionDetector(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
+                               const std::string& collision_detector);
 
 void initPlanningScene(py::module& m);
 }  // namespace bind_planning_scene
