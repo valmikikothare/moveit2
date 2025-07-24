@@ -49,9 +49,9 @@ rclcpp::Logger getLogger()
 }
 
 std::shared_ptr<moveit_cpp::PlanningComponent>
-getPlanningComponent(std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr, const std::string& planning_component)
+getPlanningComponent(std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr, const std::string& group_name)
 {
-  return std::make_shared<moveit_cpp::PlanningComponent>(planning_component, moveit_cpp_ptr);
+  return std::make_shared<moveit_cpp::PlanningComponent>(group_name, moveit_cpp_ptr);
 }
 
 void initMoveitPy(py::module& m)
@@ -152,7 +152,8 @@ void initMoveitPy(py::module& m)
            py::arg("launch_params_filepaths") =
                utils.attr("get_launch_params_filepaths")().cast<std::vector<std::string>>(),
            py::arg("config_dict") = py::none(), py::arg("provide_planning_service") = true,
-           py::arg("remappings") = py::none(), py::return_value_policy::take_ownership, py::call_guard<py::gil_scoped_release>(),
+           py::arg("remappings") = py::none(), py::return_value_policy::take_ownership,
+           py::call_guard<py::gil_scoped_release>(),
            R"(
            Initialize moveit_cpp node and the planning scene service.
            )")
@@ -163,12 +164,12 @@ void initMoveitPy(py::module& m)
            R"(
 	   Execute a trajectory (planning group is inferred from robot trajectory object).
 	   )")
-      .def("get_planning_component", &moveit_py::bind_moveit_cpp::getPlanningComponent,
-           py::arg("planning_component_name"), py::return_value_policy::take_ownership,
+      .def("get_planning_component", &moveit_py::bind_moveit_cpp::getPlanningComponent, py::arg("group_name"),
+           py::return_value_policy::take_ownership,
            R"(
            Creates a planning component instance.
            Args:
-               planning_component_name (str): The name of the planning component.
+               group_name (str): The name of the planning group.
            Returns:
                :py:class:`moveit_py.planning.PlanningComponent`: A planning component instance corresponding to the provided plan component name.
           )")

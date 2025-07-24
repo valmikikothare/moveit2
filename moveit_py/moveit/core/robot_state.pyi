@@ -1,11 +1,15 @@
 from __future__ import annotations
-from typing import Dict, Optional
-from moveit_msgs.msg import RobotState as RobotStateMsg
-from moveit.core.robot_model import RobotModel, JointModelGroup
-from geometry_msgs.msg import Pose
-import numpy
 
-def robotStateToRobotStateMsg(state: RobotState, copy_attached_bodies: bool = True) -> RobotStateMsg: ...
+from typing import Optional
+
+import numpy
+from geometry_msgs.msg import Pose
+from moveit.core.robot_model import JointModelGroup, RobotModel
+from moveit_msgs.msg import RobotState as RobotStateMsg
+
+def robotStateToRobotStateMsg(
+    state: RobotState, copy_attached_bodies: bool = True
+) -> RobotStateMsg: ...
 
 class RobotState:
     """
@@ -61,14 +65,18 @@ class RobotState:
         """
         ...
     @property
-    def joint_positions(self) -> Dict[str, float]: ...
+    def joint_positions(self) -> dict[str, float]: ...
+    @joint_positions.setter
+    def joint_positions(self, joint_positions: dict[str, float]) -> None: ...
     @property
-    def joint_velocities(self) -> Dict[str, float]: ...
+    def joint_velocities(self) -> dict[str, float]: ...
     @property
-    def joint_accelerations(self) -> Dict[str, float]: ...
+    def joint_accelerations(self) -> dict[str, float]: ...
     @property
-    def joint_efforts(self) -> Dict[str, float]: ...
-    def set_joint_group_positions(self, joint_model_group_name: str, position_values: numpy.ndarray) -> None:
+    def joint_efforts(self) -> dict[str, float]: ...
+    def set_joint_group_positions(
+        self, joint_model_group_name: str, position_values: numpy.ndarray
+    ) -> None:
         """
         Sets the positions of the joints in the specified joint model group.
         """
@@ -80,17 +88,23 @@ class RobotState:
         Sets the active positions of joints in the specified joint model group.
         """
         ...
-    def get_joint_group_positions(self, joint_model_group_name: str) -> numpy.ndarray:
+    def get_joint_group_positions(
+        self, joint_model_group_name: str
+    ) -> numpy.ndarray:
         """
         For a given group, get the position values of the variables that make up the group.
         """
         ...
-    def set_joint_group_velocities(self, joint_model_group_name: str, velocity_values: numpy.ndarray) -> None:
+    def set_joint_group_velocities(
+        self, joint_model_group_name: str, velocity_values: numpy.ndarray
+    ) -> None:
         """
         Sets the velocities of the joints in the specified joint model group.
         """
         ...
-    def get_joint_group_velocities(self, joint_model_group_name: str) -> numpy.ndarray:
+    def get_joint_group_velocities(
+        self, joint_model_group_name: str
+    ) -> numpy.ndarray:
         """
         For a given group, get the velocity values of the variables that make up the group.
         """
@@ -102,7 +116,9 @@ class RobotState:
         Sets the accelerations of the joints in the specified joint model group.
         """
         ...
-    def get_joint_group_accelerations(self, joint_model_group_name: str) -> numpy.ndarray:
+    def get_joint_group_accelerations(
+        self, joint_model_group_name: str
+    ) -> numpy.ndarray:
         """
         For a given group, get the acceleration values of the variables that make up the group.
         """
@@ -124,14 +140,18 @@ class RobotState:
         """
         ...
     def set_to_default_values(
-        self, joint_model_group: Optional[JointModelGroup] = None, name: Optional[str] = None
+        self,
+        joint_model_group: Optional[JointModelGroup] = None,
+        name: Optional[str] = None,
     ) -> None:
         """
         Set all joints to their default positions.
         The default position is 0, or if that is not within bounds then half way between min and max bound.
         """
         ...
-    def set_to_random_positions(self, joint_model_group: Optional[JointModelGroup] = None) -> None:
+    def set_to_random_positions(
+        self, joint_model_group: Optional[JointModelGroup] = None
+    ) -> None:
         """
         Set all joints to random positions within the default bounds.
         """

@@ -319,12 +319,22 @@ void initMultiPlanRequestParameters(py::module& m)
                              )")
       .def(py::init([](std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp,
                        const std::vector<std::string>& planning_pipeline_names) {
-        const rclcpp::Node::SharedPtr& node = moveit_cpp->getNode();
-        moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters params{ node, planning_pipeline_names };
-        return params;
-      }))
+             const rclcpp::Node::SharedPtr& node = moveit_cpp->getNode();
+             moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters params{ node, planning_pipeline_names };
+             return params;
+           }),
+           py::arg("moveit_py"), py::arg("planning_pipelines"),
+           R"(
+           Constructs a MultiPipelinePlanRequestParameters instance.
+
+           Args:
+               moveit_py (:py:class:`moveit_py.core.MoveItPy`): The MoveItPy instance to use.
+           )")
       .def_readonly("multi_plan_request_parameters",
-                    &moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters::plan_request_parameter_vector);
+                    &moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters::plan_request_parameter_vector,
+                    R"(
+                    dict: The parameters for the individual planning pipelines which run concurrently.
+                    )");
 }
 void initPlanningComponent(py::module& m)
 {
@@ -333,14 +343,14 @@ void initPlanningComponent(py::module& m)
       Represents a joint model group and motion plans corresponding to this joint model group.
       )")
 
-      .def(py::init<const std::string&, const std::shared_ptr<moveit_cpp::MoveItCpp>&>(),
-           py::arg("joint_model_group_name"), py::arg("moveit_py_instance"),
+      .def(py::init<const std::string&, const std::shared_ptr<moveit_cpp::MoveItCpp>&>(), py::arg("group_name"),
+           py::arg("moveit_py"),
            R"(
             Constructs a PlanningComponent instance.
 
 	    Args:
-                joint_model_group_name (str): The name of the joint model group to plan for.
-                moveit_py_instance (:py:class:`moveit_py.core.MoveItPy`): The MoveItPy instance to use.
+                group_name (str): The name of the joint model group to plan for.
+                moveit_py (:py:class:`moveit_py.core.MoveItPy`): The MoveItPy instance to use.
         )")
 
       .def("get_named_target_state_values", &moveit_cpp::PlanningComponent::getNamedTargetStateValues, py::arg("name"),
