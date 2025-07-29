@@ -6,7 +6,6 @@
         "limitSymbolsToIncludedHeaders": false
       },
       "includePath": [
-        "/root/ws/install/tabletop_msgs/include/**",
         "/root/ws/install/pilz_industrial_motion_planner_testutils/include/**",
         "/root/ws/install/pilz_industrial_motion_planner/include/**",
         "/root/ws/install/moveit_ros_control_interface/include/**",
@@ -37,9 +36,6 @@
         "/root/ws/install/chomp_motion_planner/include/**",
         "/root/ws/install/moveit_core/include/**",
         "/root/ws/install/moveit_msgs/include/**",
-        "/root/ws/install/micro_ros_agent/include/**",
-        "/root/ws/install/micro_ros_msgs/include/**",
-        "/root/ws/install/drive_base_msgs/include/**",
         "/opt/ros/jazzy/include/**",
         "/root/ws/src/moveit2/moveit_planners/chomp/chomp_interface/include/**",
         "/root/ws/src/moveit2/moveit_planners/chomp/chomp_motion_planner/include/**",
@@ -63,10 +59,9 @@
         "/root/ws/src/moveit2/moveit_setup_assistant/moveit_setup_core_plugins/include/**",
         "/root/ws/src/moveit2/moveit_setup_assistant/moveit_setup_framework/include/**",
         "/root/ws/src/moveit2/moveit_setup_assistant/moveit_setup_srdf_plugins/include/**",
-        "/root/ws/src/tabletop/ros/uros/micro-ROS-Agent/micro_ros_agent/include/**",
         "/usr/include/**"
       ],
-      "name": "ROS",
+      "name": "Moveit2",
       "intelliSenseMode": "gcc-x64",
       "compilerPath": "/usr/bin/gcc",
       "cStandard": "gnu11",
