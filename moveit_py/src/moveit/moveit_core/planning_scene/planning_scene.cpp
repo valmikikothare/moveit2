@@ -42,27 +42,6 @@
 
 namespace
 {
-bool saveGeometryToFile(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
-                        const std::string& file_path_and_name)
-{
-  std::ofstream file(file_path_and_name);
-  if (!file.is_open())
-  {
-    return false;
-  }
-  planning_scene->saveGeometryToStream(file);
-  file.close();
-  return true;
-}
-
-bool loadGeometryFromFile(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
-                          const std::string& file_path_and_name)
-{
-  std::ifstream file(file_path_and_name);
-  planning_scene->loadGeometryFromStream(file);
-  file.close();
-  return true;
-}
 }  // namespace
 
 namespace moveit_py
@@ -101,13 +80,43 @@ void allocateCollisionDetector(std::shared_ptr<planning_scene::PlanningScene>& p
                                const std::string& collision_detector)
 {
   if (collision_detector == "bullet")
+  {
     planning_scene->allocateCollisionDetector(collision_detection::CollisionDetectorAllocatorBullet::create());
+  }
   else if (collision_detector == "fcl")
+  {
     planning_scene->allocateCollisionDetector(collision_detection::CollisionDetectorAllocatorFCL::create());
+  }
   else if (collision_detector == "all_valid")
+  {
     planning_scene->allocateCollisionDetector(collision_detection::CollisionDetectorAllocatorAllValid::create());
+  }
   else
+  {
     throw std::invalid_argument("Invalid collision detector name: " + collision_detector);
+  }
+}
+
+bool saveGeometryToFile(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
+                        const std::string& file_path_and_name)
+{
+  std::ofstream file(file_path_and_name);
+  if (!file.is_open())
+  {
+    return false;
+  }
+  planning_scene->saveGeometryToStream(file);
+  file.close();
+  return true;
+}
+
+bool loadGeometryFromFile(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
+                          const std::string& file_path_and_name)
+{
+  std::ifstream file(file_path_and_name);
+  planning_scene->loadGeometryFromStream(file);
+  file.close();
+  return true;
 }
 
 void initPlanningScene(py::module& m)
@@ -527,7 +536,7 @@ void initPlanningScene(py::module& m)
                bool: true if state is in self collision otherwise false.
            )")
 
-      .def("save_geometry_to_file", &saveGeometryToFile, py::arg("file_path_and_name"),
+      .def("save_geometry_to_file", &moveit_py::bind_planning_scene::saveGeometryToFile, py::arg("file_path_and_name"),
            R"(
            Save the CollisionObjects in the PlanningScene to a file
 
@@ -538,7 +547,8 @@ void initPlanningScene(py::module& m)
                bool: true if save to file was successful otherwise false.
            )")
 
-      .def("load_geometry_from_file", &loadGeometryFromFile, py::arg("file_path_and_name"),
+      .def("load_geometry_from_file", &moveit_py::bind_planning_scene::loadGeometryFromFile,
+           py::arg("file_path_and_name"),
            R"(
            Load the CollisionObjects from a file to the PlanningScene
 

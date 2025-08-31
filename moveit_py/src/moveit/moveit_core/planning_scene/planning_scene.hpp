@@ -64,5 +64,12 @@ void allocateCollisionDetector(std::shared_ptr<planning_scene::PlanningScene>& p
                                const std::string& collision_detector);
 
 void initPlanningScene(py::module& m);
+
+bool saveGeometryToFile(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
+                        const std::string& file_path_and_name);
+
+bool loadGeometryFromFile(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
+                          const std::string& file_path_and_name);
+
 }  // namespace bind_planning_scene
 }  // namespace moveit_py
