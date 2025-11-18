@@ -114,6 +114,10 @@ bool loadGeometryFromFile(std::shared_ptr<planning_scene::PlanningScene>& planni
                           const std::string& file_path_and_name)
 {
   std::ifstream file(file_path_and_name);
+  if (!file.is_open())
+  {
+    return false;
+  }
   planning_scene->loadGeometryFromStream(file);
   file.close();
   return true;
