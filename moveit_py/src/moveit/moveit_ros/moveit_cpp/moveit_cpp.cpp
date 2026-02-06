@@ -65,7 +65,8 @@ void initMoveitPy(py::module& m)
       .def(py::init([](const std::string& node_name, const std::string& name_space,
                        const std::vector<std::string>& launch_params_filepaths, const py::object& config_dict,
                        bool provide_planning_service,
-                       const std::optional<std::map<std::string, std::string>>& remappings) {
+                       const std::optional<std::map<std::string, std::string>>& remappings,
+                       bool install_signal_handlers) {
              // This section is used to load the appropriate node parameters before spinning a moveit_cpp instance
              // Priority is given to parameters supplied directly via a config_dict, followed by launch parameters
              // and finally no supplied parameters.
@@ -109,7 +110,10 @@ void initMoveitPy(py::module& m)
                  chars.push_back(arg.c_str());
                }
 
-               rclcpp::init(launch_arguments.size(), chars.data());
+               rclcpp::SignalHandlerOptions signal_handler_options =
+                   install_signal_handlers ? rclcpp::SignalHandlerOptions::All : rclcpp::SignalHandlerOptions::None;
+
+               rclcpp::init(launch_arguments.size(), chars.data(), rclcpp::InitOptions(), signal_handler_options);
                RCLCPP_INFO(getLogger(), "Initialize rclcpp");
              }
 
@@ -152,7 +156,8 @@ void initMoveitPy(py::module& m)
            py::arg("launch_params_filepaths") =
                utils.attr("get_launch_params_filepaths")().cast<std::vector<std::string>>(),
            py::arg("config_dict") = py::none(), py::arg("provide_planning_service") = true,
-           py::arg("remappings") = py::none(), py::return_value_policy::take_ownership, py::call_guard<py::gil_scoped_release>(),
+           py::arg("remappings") = py::none(), py::arg("install_signal_handlers") = true,
+           py::return_value_policy::take_ownership, py::call_guard<py::gil_scoped_release>(),
            R"(
            Initialize moveit_cpp node and the planning scene service.
            )")
