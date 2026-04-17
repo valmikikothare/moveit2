@@ -321,10 +321,11 @@ void initPlanningScene(py::module& m)
       .def("is_state_valid",
            py::overload_cast<const moveit::core::RobotState&, const std::string&, bool>(
                &planning_scene::PlanningScene::isStateValid, py::const_),
-           py::arg("robot_state"), py::arg("joint_model_group_name"), py::arg("verbose") = false)
+           py::call_guard<py::gil_scoped_release>(), py::arg("robot_state"), py::arg("joint_model_group_name"),
+           py::arg("verbose") = false)
       .def("is_state_colliding",
            py::overload_cast<const std::string&, bool>(&planning_scene::PlanningScene::isStateColliding),
-           py::arg("joint_model_group_name"), py::arg("verbose") = false,
+           py::call_guard<py::gil_scoped_release>(), py::arg("joint_model_group_name"), py::arg("verbose") = false,
            R"(
            Check if the robot state is in collision.
 
@@ -338,7 +339,8 @@ void initPlanningScene(py::module& m)
       .def("is_state_colliding",
            py::overload_cast<const moveit::core::RobotState&, const std::string&, bool>(
                &planning_scene::PlanningScene::isStateColliding, py::const_),
-           py::arg("robot_state"), py::arg("joint_model_group_name"), py::arg("verbose") = false,
+           py::call_guard<py::gil_scoped_release>(), py::arg("robot_state"), py::arg("joint_model_group_name"),
+           py::arg("verbose") = false,
            R"(
            Check if the robot state is in collision.
 
@@ -353,7 +355,8 @@ void initPlanningScene(py::module& m)
       .def("is_state_constrained",
            py::overload_cast<const moveit::core::RobotState&, const moveit_msgs::msg::Constraints&, bool>(
                &planning_scene::PlanningScene::isStateConstrained, py::const_),
-           py::arg("state"), py::arg("constraints"), py::arg("verbose") = false,
+           py::call_guard<py::gil_scoped_release>(), py::arg("state"), py::arg("constraints"),
+           py::arg("verbose") = false,
            R"(
            Check if the robot state fulfills the passed constraints
 
@@ -368,8 +371,8 @@ void initPlanningScene(py::module& m)
       .def("is_path_valid",
            py::overload_cast<const robot_trajectory::RobotTrajectory&, const std::string&, bool,
                              std::vector<std::size_t>*>(&planning_scene::PlanningScene::isPathValid, py::const_),
-           py::arg("trajectory"), py::arg("joint_model_group_name"), py::arg("verbose") = false,
-           py::arg("invalid_index") = nullptr,
+           py::call_guard<py::gil_scoped_release>(), py::arg("trajectory"), py::arg("joint_model_group_name"),
+           py::arg("verbose") = false, py::arg("invalid_index") = nullptr,
            R"(
            Check if a given path is valid. Each state is checked for validity (collision avoidance and feasibility)
 
@@ -396,7 +399,7 @@ void initPlanningScene(py::module& m)
       .def("check_collision",
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&>(
                &planning_scene::PlanningScene::checkCollision),
-           py::arg("collision_request"), py::arg("collision_result"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("collision_request"), py::arg("collision_result"),
            R"(
            Check whether the current state is in collision, and if needed, updates the collision transforms of the current state before the computation.
 
@@ -411,7 +414,8 @@ void initPlanningScene(py::module& m)
       .def("check_collision",
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&,
                              moveit::core::RobotState&>(&planning_scene::PlanningScene::checkCollision, py::const_),
-           py::arg("collision_request"), py::arg("collision_result"), py::arg("state"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("collision_request"), py::arg("collision_result"),
+           py::arg("state"),
            R"(
            Check if the robot state is in collision.
 
@@ -428,7 +432,8 @@ void initPlanningScene(py::module& m)
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&,
                              moveit::core::RobotState&, const collision_detection::AllowedCollisionMatrix&>(
                &planning_scene::PlanningScene::checkCollision, py::const_),
-           py::arg("collision_request"), py::arg("collision_result"), py::arg("state"), py::arg("acm"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("collision_request"), py::arg("collision_result"),
+           py::arg("state"), py::arg("acm"),
            R"(
            Check if the robot state is in collision.
 
@@ -445,7 +450,7 @@ void initPlanningScene(py::module& m)
       .def("check_collision_unpadded",
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&>(
                &planning_scene::PlanningScene::checkCollisionUnpadded),
-           py::arg("req"), py::arg("result"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("req"), py::arg("result"),
            R"(
            Check if the robot state is in collision.
 
@@ -461,7 +466,8 @@ void initPlanningScene(py::module& m)
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&,
                              moveit::core::RobotState&>(&planning_scene::PlanningScene::checkCollisionUnpadded,
                                                         py::const_),
-           py::arg("collision_request"), py::arg("collision_result"), py::arg("state"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("collision_request"), py::arg("collision_result"),
+           py::arg("state"),
            R"(
            Check if the robot state is in collision.
 
@@ -478,7 +484,8 @@ void initPlanningScene(py::module& m)
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&,
                              moveit::core::RobotState&, const collision_detection::AllowedCollisionMatrix&>(
                &planning_scene::PlanningScene::checkCollisionUnpadded, py::const_),
-           py::arg("collision_request"), py::arg("collision_result"), py::arg("state"), py::arg("acm"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("collision_request"), py::arg("collision_result"),
+           py::arg("state"), py::arg("acm"),
            R"(
            Check if the robot state is in collision.
 
@@ -494,7 +501,7 @@ void initPlanningScene(py::module& m)
       .def("check_self_collision",
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&>(
                &planning_scene::PlanningScene::checkSelfCollision),
-           py::arg("collision_request"), py::arg("collision_result"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("collision_request"), py::arg("collision_result"),
            R"(
            Check if the robot state is in collision.
 
@@ -509,7 +516,8 @@ void initPlanningScene(py::module& m)
       .def("check_self_collision",
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&,
                              moveit::core::RobotState&>(&planning_scene::PlanningScene::checkSelfCollision, py::const_),
-           py::arg("collision_request"), py::arg("collision_result"), py::arg("state"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("collision_request"), py::arg("collision_result"),
+           py::arg("state"),
            R"(
            Check if the robot state is in collision.
 
@@ -526,7 +534,8 @@ void initPlanningScene(py::module& m)
            py::overload_cast<const collision_detection::CollisionRequest&, collision_detection::CollisionResult&,
                              moveit::core::RobotState&, const collision_detection::AllowedCollisionMatrix&>(
                &planning_scene::PlanningScene::checkSelfCollision, py::const_),
-           py::arg("collision_request"), py::arg("collision_result"), py::arg("state"), py::arg("acm"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("collision_request"), py::arg("collision_result"),
+           py::arg("state"), py::arg("acm"),
            R"(
            Check if the robot state is in collision.
 
@@ -540,7 +549,8 @@ void initPlanningScene(py::module& m)
                bool: true if state is in self collision otherwise false.
            )")
 
-      .def("save_geometry_to_file", &moveit_py::bind_planning_scene::saveGeometryToFile, py::arg("file_path_and_name"),
+      .def("save_geometry_to_file", &moveit_py::bind_planning_scene::saveGeometryToFile,
+           py::call_guard<py::gil_scoped_release>(), py::arg("file_path_and_name"),
            R"(
            Save the CollisionObjects in the PlanningScene to a file
 
@@ -552,7 +562,7 @@ void initPlanningScene(py::module& m)
            )")
 
       .def("load_geometry_from_file", &moveit_py::bind_planning_scene::loadGeometryFromFile,
-           py::arg("file_path_and_name"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("file_path_and_name"),
            R"(
            Load the CollisionObjects from a file to the PlanningScene
 
