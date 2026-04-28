@@ -1091,6 +1091,33 @@ JointModel* RobotModel::constructJointModel(const urdf::Link* child_link, const 
                                                                     << new_joint_model->getTypeName());
         }
       }
+      else if (property.property_name_ == "distance_factor")
+      {
+        try
+        {
+          std::string::size_type sz;
+          double distance_factor = std::stod(property.value_, &sz);
+          if (sz != property.value_.size())
+          {
+            RCLCPP_WARN_STREAM(getLogger(), "Extra characters after property "
+                                                << property.property_name_ << " for joint " << property.joint_name_
+                                                << " as double: '" << property.value_.substr(sz) << '\'');
+          }
+          new_joint_model->setDistanceFactor(distance_factor);
+        }
+        catch (const std::invalid_argument& e)
+        {
+          RCLCPP_ERROR_STREAM(getLogger(), "Unable to parse property " << property.property_name_ << " for joint "
+                                                                       << property.joint_name_ << " as double: '"
+                                                                       << property.value_ << '\'');
+        }
+        catch (const std::out_of_range& e)
+        {
+          RCLCPP_ERROR_STREAM(getLogger(), "Property " << property.property_name_ << " for joint "
+                                                       << property.joint_name_ << " is out of range: '"
+                                                       << property.value_ << '\'');
+        }
+      }
       else if (property.property_name_ == "motion_model")
       {
         if (new_joint_model->getType() != JointModel::JointType::PLANAR)
