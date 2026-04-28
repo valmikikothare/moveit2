@@ -1641,6 +1641,7 @@ void RobotModel::printModelInfo(std::ostream& out) const
   {
     out << " '" << joint_model->getName() << "' (" << joint_model->getTypeName() << ")\n";
     out << "  * Joint Index: " << joint_model->getJointIndex() << '\n';
+    out << "  * Joint Distance Factor: " << joint_model->getDistanceFactor() << '\n';
     const std::vector<std::string>& vn = joint_model->getVariableNames();
     out << "  * " << vn.size() << (vn.size() > 1 ? " variables:" : (vn.empty() ? " variables" : " variable:\n"));
     int idx = joint_model->getFirstVariableIndex();
