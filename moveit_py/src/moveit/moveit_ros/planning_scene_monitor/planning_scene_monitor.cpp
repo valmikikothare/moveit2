@@ -149,6 +149,7 @@ void initPlanningSceneMonitor(py::module& m)
 	   )")
 
       .def("wait_for_current_robot_state", &planning_scene_monitor::PlanningSceneMonitor::waitForCurrentRobotState,
+           py::call_guard<py::gil_scoped_release>(),
            R"(
 	   Waits for the current robot state to be received.
 	   )")
@@ -226,6 +227,7 @@ void initContextManagers(py::module& m)
 
       .def("__enter__",
            &moveit_py::bind_planning_scene_monitor::LockedPlanningSceneContextManagerRW::lockedPlanningSceneRwEnter,
+           py::return_value_policy::take_ownership,
            R"(
            Special method that is used with the with statement, provides access to a locked plannning scene instance.
            Returns:
