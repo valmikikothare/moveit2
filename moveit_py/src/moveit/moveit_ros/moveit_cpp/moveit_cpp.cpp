@@ -157,7 +157,7 @@ void initMoveitPy(py::module& m)
                utils.attr("get_launch_params_filepaths")().cast<std::vector<std::string>>(),
            py::arg("config_dict") = py::none(), py::arg("provide_planning_service") = true,
            py::arg("remappings") = py::none(), py::arg("install_signal_handlers") = true,
-           py::return_value_policy::take_ownership, py::call_guard<py::gil_scoped_release>(),
+           py::return_value_policy::take_ownership,
            R"(
            Initialize moveit_cpp node and the planning scene service.
            )")

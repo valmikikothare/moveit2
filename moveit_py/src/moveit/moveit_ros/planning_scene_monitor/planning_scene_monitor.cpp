@@ -184,12 +184,12 @@ void initPlanningSceneMonitor(py::module& m)
                scene (moveit_msgs.msg.PlanningScene): The new planning scene message.
            )")
 
-      .def("read_only", &moveit_py::bind_planning_scene_monitor::readOnly,
+      .def("read_only", &moveit_py::bind_planning_scene_monitor::readOnly, py::call_guard<py::gil_scoped_release>(),
            R"(
            Returns a read-only context manager for the planning scene.
            )")
 
-      .def("read_write", &moveit_py::bind_planning_scene_monitor::readWrite,
+      .def("read_write", &moveit_py::bind_planning_scene_monitor::readWrite, py::call_guard<py::gil_scoped_release>(),
            R"(
            Returns a read-write context manager for the planning scene.
            )");
@@ -226,7 +226,6 @@ void initContextManagers(py::module& m)
 
       .def("__enter__",
            &moveit_py::bind_planning_scene_monitor::LockedPlanningSceneContextManagerRW::lockedPlanningSceneRwEnter,
-           py::return_value_policy::take_ownership,
            R"(
            Special method that is used with the with statement, provides access to a locked plannning scene instance.
            Returns:

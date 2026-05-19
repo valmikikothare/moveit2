@@ -123,6 +123,13 @@ bool loadGeometryFromFile(std::shared_ptr<planning_scene::PlanningScene>& planni
   return true;
 }
 
+bool isPathValid(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
+                 const robot_trajectory::RobotTrajectory& trajectory, const std::string& group_name, bool verbose)
+{
+  py::gil_scoped_release release;
+  return planning_scene->isPathValid(trajectory, group_name, verbose, nullptr);
+}
+
 void initPlanningScene(py::module& m)
 {
   py::module planning_scene = m.def_submodule("planning_scene");
@@ -365,19 +372,16 @@ void initPlanningScene(py::module& m)
                bool: true if state is constrained otherwise false.
            )")
 
-      .def("is_path_valid",
-           py::overload_cast<const robot_trajectory::RobotTrajectory&, const std::string&, bool,
-                             std::vector<std::size_t>*>(&planning_scene::PlanningScene::isPathValid, py::const_),
-           py::arg("trajectory"), py::arg("joint_model_group_name"), py::arg("verbose") = false,
-           py::arg("invalid_index") = nullptr,
+      .def("is_path_valid", &moveit_py::bind_planning_scene::isPathValid, py::arg("trajectory"),
+           py::arg("joint_model_group_name"), py::arg("verbose") = false,
            R"(
-           Check if a given path is valid. Each state is checked for validity (collision avoidance and feasibility)
+           Check if a given path is valid. Each state is checked for validity (collision avoidance and feasibility).
+           Releases the GIL during the check to avoid deadlocks with the PlanningSceneMonitor.
 
 	   Args:
                trajectory (:py:class:`moveit_py.core.RobotTrajectory`): The trajectory to check.
                joint_model_group_name (str): The joint model group to check the path against.
                verbose (bool):
-               invalid_index (list):
 
 	   Returns:
                bool: true if the path is valid otherwise false.
