@@ -44,19 +44,19 @@ namespace moveit_py
 {
 namespace bind_robot_state
 {
-void update(moveit::core::RobotState* self, bool force, std::string& category)
+void update(moveit::core::RobotState& self, bool force, std::string& category)
 {
   if (category == "all")
   {
-    self->update(force);
+    self.update(force);
   }
   else if (category == "links_only")
   {
-    self->updateLinkTransforms();
+    self.updateLinkTransforms();
   }
   else if (category == "collisions_only")
   {
-    self->updateCollisionBodyTransforms();
+    self.updateCollisionBodyTransforms();
   }
   else
   {
@@ -64,146 +64,144 @@ void update(moveit::core::RobotState* self, bool force, std::string& category)
   }
 }
 
-Eigen::MatrixXd getFrameTransform(const moveit::core::RobotState* self, std::string& frame_id)
+Eigen::MatrixXd getFrameTransform(const moveit::core::RobotState& self, std::string& frame_id)
 {
   bool frame_found;
-  auto transformation = self->getFrameTransform(frame_id, &frame_found);
+  auto transformation = self.getFrameTransform(frame_id, &frame_found);
   return transformation.matrix();
 }
 
-Eigen::MatrixXd getGlobalLinkTransform(const moveit::core::RobotState* self, std::string& link_name)
+Eigen::MatrixXd getGlobalLinkTransform(const moveit::core::RobotState& self, std::string& link_name)
 {
-  auto transformation = self->getGlobalLinkTransform(link_name);
+  auto transformation = self.getGlobalLinkTransform(link_name);
   return transformation.matrix();
 }
 
-geometry_msgs::msg::Pose getPose(const moveit::core::RobotState* self, const std::string& link_name)
-{
-  return tf2::toMsg(self->getGlobalLinkTransform(link_name));
-}
+geometry_msgs::msg::Pose getPose(const moveit::core::RobotState& self, const std::string& link_name)
+{ return tf2::toMsg(self.getGlobalLinkTransform(link_name)); }
 
-std::map<std::string, double> getJointPositions(const moveit::core::RobotState* self)
+std::map<std::string, double> getJointPositions(const moveit::core::RobotState& self)
 {
   std::map<std::string, double> joint_positions;
-  const std::vector<std::string>& variable_name = self->getVariableNames();
+  const std::vector<std::string>& variable_name = self.getVariableNames();
   for (auto& name : variable_name)
   {
-    joint_positions[name.c_str()] = self->getVariablePosition(name);
+    joint_positions[name.c_str()] = self.getVariablePosition(name);
   }
   return joint_positions;
 }
 
-void setJointPositions(moveit::core::RobotState* self, std::map<std::string, double>& joint_positions)
+void setJointPositions(moveit::core::RobotState& self, std::map<std::string, double>& joint_positions)
 {
   for (const auto& item : joint_positions)
   {
-    self->setVariablePosition(item.first, item.second);
+    self.setVariablePosition(item.first, item.second);
   }
 }
 
-std::map<std::string, double> getJointVelocities(const moveit::core::RobotState* self)
+std::map<std::string, double> getJointVelocities(const moveit::core::RobotState& self)
 {
   std::map<std::string, double> joint_velocity;
-  const std::vector<std::string>& variable_name = self->getVariableNames();
+  const std::vector<std::string>& variable_name = self.getVariableNames();
   for (auto& name : variable_name)
   {
-    joint_velocity[name.c_str()] = self->getVariableVelocity(name);
+    joint_velocity[name.c_str()] = self.getVariableVelocity(name);
   }
   return joint_velocity;
 }
 
-void setJointVelocities(moveit::core::RobotState* self, std::map<std::string, double>& joint_velocities)
+void setJointVelocities(moveit::core::RobotState& self, std::map<std::string, double>& joint_velocities)
 {
   for (const auto& item : joint_velocities)
   {
-    self->setVariableVelocity(item.first, item.second);
+    self.setVariableVelocity(item.first, item.second);
   }
 }
 
-std::map<std::string, double> getJointAccelerations(const moveit::core::RobotState* self)
+std::map<std::string, double> getJointAccelerations(const moveit::core::RobotState& self)
 {
   std::map<std::string, double> joint_acceleration;
-  const std::vector<std::string>& variable_name = self->getVariableNames();
+  const std::vector<std::string>& variable_name = self.getVariableNames();
   for (auto& name : variable_name)
   {
-    joint_acceleration[name.c_str()] = self->getVariableAcceleration(name);
+    joint_acceleration[name.c_str()] = self.getVariableAcceleration(name);
   }
   return joint_acceleration;
 }
 
-void setJointAccelerations(moveit::core::RobotState* self, std::map<std::string, double>& joint_accelerations)
+void setJointAccelerations(moveit::core::RobotState& self, std::map<std::string, double>& joint_accelerations)
 {
   for (const auto& item : joint_accelerations)
   {
-    self->setVariableAcceleration(item.first, item.second);
+    self.setVariableAcceleration(item.first, item.second);
   }
 }
 
-std::map<std::string, double> getJointEfforts(const moveit::core::RobotState* self)
+std::map<std::string, double> getJointEfforts(const moveit::core::RobotState& self)
 {
   std::map<std::string, double> joint_effort;
-  const std::vector<std::string>& variable_name = self->getVariableNames();
+  const std::vector<std::string>& variable_name = self.getVariableNames();
   for (auto& name : variable_name)
   {
-    joint_effort[name.c_str()] = self->getVariableEffort(name);
+    joint_effort[name.c_str()] = self.getVariableEffort(name);
   }
   return joint_effort;
 }
 
-void setJointEfforts(moveit::core::RobotState* self, std::map<std::string, double>& joint_efforts)
+void setJointEfforts(moveit::core::RobotState& self, std::map<std::string, double>& joint_efforts)
 {
   for (const auto& item : joint_efforts)
   {
-    self->setVariableEffort(item.first, item.second);
+    self.setVariableEffort(item.first, item.second);
   }
 }
 
-Eigen::VectorXd copyJointGroupPositions(const moveit::core::RobotState* self, const std::string& joint_model_group_name)
+Eigen::VectorXd copyJointGroupPositions(const moveit::core::RobotState& self, const std::string& joint_model_group_name)
 {
   Eigen::VectorXd values;
-  self->copyJointGroupPositions(joint_model_group_name, values);
+  self.copyJointGroupPositions(joint_model_group_name, values);
   return values;
 }
 
-Eigen::VectorXd copyJointGroupVelocities(const moveit::core::RobotState* self, const std::string& joint_model_group_name)
+Eigen::VectorXd copyJointGroupVelocities(const moveit::core::RobotState& self, const std::string& joint_model_group_name)
 {
   Eigen::VectorXd values;
-  self->copyJointGroupVelocities(joint_model_group_name, values);
+  self.copyJointGroupVelocities(joint_model_group_name, values);
   return values;
 }
 
-Eigen::VectorXd copyJointGroupAccelerations(const moveit::core::RobotState* self,
+Eigen::VectorXd copyJointGroupAccelerations(const moveit::core::RobotState& self,
                                             const std::string& joint_model_group_name)
 {
   Eigen::VectorXd values;
-  self->copyJointGroupAccelerations(joint_model_group_name, values);
+  self.copyJointGroupAccelerations(joint_model_group_name, values);
   return values;
 }
 
-Eigen::MatrixXd getJacobian(const moveit::core::RobotState* self, const std::string& joint_model_group_name,
+Eigen::MatrixXd getJacobian(const moveit::core::RobotState& self, const std::string& joint_model_group_name,
                             const Eigen::Vector3d& reference_point_position)
 {
-  const moveit::core::JointModelGroup* joint_model_group = self->getJointModelGroup(joint_model_group_name);
-  return self->getJacobian(joint_model_group, reference_point_position);
+  const moveit::core::JointModelGroup* joint_model_group = self.getJointModelGroup(joint_model_group_name);
+  return self.getJacobian(joint_model_group, reference_point_position);
 }
 
-Eigen::MatrixXd getJacobian(const moveit::core::RobotState* self, const std::string& joint_model_group_name,
+Eigen::MatrixXd getJacobian(const moveit::core::RobotState& self, const std::string& joint_model_group_name,
                             const std::string& link_model_name, const Eigen::Vector3d& reference_point_position,
                             bool use_quaternion_representation)
 {
   Eigen::MatrixXd jacobian;
-  const moveit::core::JointModelGroup* joint_model_group = self->getJointModelGroup(joint_model_group_name);
-  const moveit::core::LinkModel* link_model = self->getLinkModel(link_model_name);
-  self->getJacobian(joint_model_group, link_model, reference_point_position, jacobian, use_quaternion_representation);
+  const moveit::core::JointModelGroup* joint_model_group = self.getJointModelGroup(joint_model_group_name);
+  const moveit::core::LinkModel* link_model = self.getLinkModel(link_model_name);
+  self.getJacobian(joint_model_group, link_model, reference_point_position, jacobian, use_quaternion_representation);
   return jacobian;
 }
 
-bool setToDefaultValues(moveit::core::RobotState* self, const std::string& joint_model_group_name,
+bool setToDefaultValues(moveit::core::RobotState& self, const std::string& joint_model_group_name,
                         const std::string& state_name)
 
 {
-  const moveit::core::JointModelGroup* joint_model_group = self->getJointModelGroup(joint_model_group_name);
-  return self->setToDefaultValues(joint_model_group, state_name);
+  const moveit::core::JointModelGroup* joint_model_group = self.getJointModelGroup(joint_model_group_name);
+  return self.setToDefaultValues(joint_model_group, state_name);
 }
 
 void initRobotState(py::module& m)
@@ -232,9 +230,15 @@ void initRobotState(py::module& m)
                :py:class:`moveit_py.core.RobotModel`: The robot model associated to the instantiated robot state.
 
            )")
-      .def("__copy__", [](const moveit::core::RobotState* self) { return moveit::core::RobotState{ *self }; })
-      .def("__deepcopy__", [](const moveit::core::RobotState* self,
-                              py::dict /* memo */) { return moveit::core::RobotState{ *self }; })  // NOLINT
+      .def(
+          "__copy__", [](const moveit::core::RobotState& self) { return moveit::core::RobotState{ self }; },
+          py::call_guard<py::gil_scoped_release>())
+      .def(
+          "__deepcopy__",
+          [](const moveit::core::RobotState& self, py::dict /* memo */) {  // NOLINT
+            return moveit::core::RobotState{ self };
+          },
+          py::call_guard<py::gil_scoped_release>())
 
       // Get underlying robot model, frame transformations and jacobian
       .def_property("robot_model", &moveit::core::RobotState::getRobotModel, nullptr,
@@ -272,7 +276,7 @@ void initRobotState(py::module& m)
            )")
 
       .def("get_jacobian",
-           py::overload_cast<const moveit::core::RobotState*, const std::string&, const Eigen::Vector3d&>(
+           py::overload_cast<const moveit::core::RobotState&, const std::string&, const Eigen::Vector3d&>(
                &moveit_py::bind_robot_state::getJacobian),
            py::arg("joint_model_group_name"), py::arg("reference_point_position"), py::return_value_policy::move,
            R"(
@@ -290,7 +294,7 @@ void initRobotState(py::module& m)
            )")
 
       .def("get_jacobian",
-           py::overload_cast<const moveit::core::RobotState*, const std::string&, const std::string&,
+           py::overload_cast<const moveit::core::RobotState&, const std::string&, const std::string&,
                              const Eigen::Vector3d&, bool>(&moveit_py::bind_robot_state::getJacobian),
            py::arg("joint_model_group_name"), py::arg("link_name"), py::arg("reference_point_position"),
            py::arg("use_quaternion_representation") = false, py::return_value_policy::move,
@@ -438,9 +442,9 @@ void initRobotState(py::module& m)
       // Setting state from inverse kinematics
       .def(
           "set_from_ik",
-          [](moveit::core::RobotState* self, const std::string& group, const geometry_msgs::msg::Pose& pose,
+          [](moveit::core::RobotState& self, const std::string& group, const geometry_msgs::msg::Pose& pose,
              const std::string& tip,
-             double timeout) { return self->setFromIK(self->getJointModelGroup(group), pose, tip, timeout); },
+             double timeout) { return self.setFromIK(self.getJointModelGroup(group), pose, tip, timeout); },
           py::arg("joint_model_group_name"), py::arg("geometry_pose"), py::arg("tip_name"), py::arg("timeout") = 0.0,
           R"(
            Sets the state of the robot to the one that results from solving the inverse kinematics for the specified group.
@@ -472,7 +476,7 @@ void initRobotState(py::module& m)
            )")
 
       .def("set_to_default_values",
-           py::overload_cast<moveit::core::RobotState*, const std::string&, const std::string&>(
+           py::overload_cast<moveit::core::RobotState&, const std::string&, const std::string&>(
                &moveit_py::bind_robot_state::setToDefaultValues),
            py::arg("joint_model_group_name"), py::arg("name"),
            R"(
@@ -499,6 +503,7 @@ void initRobotState(py::module& m)
            )")
 
       .def("clear_attached_bodies", py::overload_cast<>(&moveit::core::RobotState::clearAttachedBodies),
+           py::call_guard<py::gil_scoped_release>(),
            R"(
            Clear all attached bodies. We only allow for attaching of objects via the PlanningScene instance. This method allows any attached objects that are associated to this RobotState instance to be removed.
      )")

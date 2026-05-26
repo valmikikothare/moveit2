@@ -42,83 +42,15 @@ namespace moveit_py
 namespace bind_planning_component
 {
 rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.py.planning_component");
-}
+{ return moveit::getLogger("moveit.py.planning_component"); }
 
 planning_interface::MotionPlanResponse
-planNoGIL(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-          std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr,
-          std::shared_ptr<moveit_cpp::PlanningComponent::PlanRequestParameters>& parameters,
-          std::shared_ptr<planning_scene::PlanningScene>& planning_scene)
-{
-  auto group_name = planning_component->getPlanningGroupName();
-  auto robot_model = moveit_cpp_ptr->getRobotModel();
-  auto plan_solution = planning_interface::MotionPlanResponse();
-  auto joint_model_group = robot_model->getJointModelGroup(group_name);
-
-  // check if joint_model_group exists
-  if (!joint_model_group)
-  {
-    RCLCPP_ERROR(getLogger(), "Failed to retrieve joint model group for name '%s'.", group_name.c_str());
-    plan_solution.error_code = moveit::core::MoveItErrorCode::INVALID_GROUP_NAME;
-    return plan_solution;
-  }
-
-  // TODO: current_goal_constraints_ is private, figure out a way to check that goal constraints exist
-  // // Check if goal constraints exist
-  // if (planning_component->current_goal_constraints_.empty())
-  // {
-  //   RCLCPP_ERROR(getLogger(), "No goal constraints set for planning request");
-  //   plan_solution.error_code = moveit::core::MoveItErrorCode::INVALID_GOAL_CONSTRAINTS;
-  //   return plan_solution;
-  // }
-
-  // Clone planning scene
-  if (!planning_scene)
-  {  // Clone current planning scene
-    planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor =
-        moveit_cpp_ptr->getPlanningSceneMonitorNonConst();
-    planning_scene_monitor->updateFrameTransforms();
-    planning_scene = [planning_scene_monitor] {
-      planning_scene_monitor::LockedPlanningSceneRO ls(planning_scene_monitor);
-      return planning_scene::PlanningScene::clone(ls);
-    }();
-    planning_scene_monitor.reset();  // release this pointer}
-  }
-  // else
-  // {
-  //   planning_scene = planning_scene::PlanningScene::clone(planning_scene);
-  // }
-
-  // Init MotionPlanRequest
-  std::shared_ptr<const moveit_cpp::PlanningComponent::PlanRequestParameters> const_parameters =
-      std::const_pointer_cast<const moveit_cpp::PlanningComponent::PlanRequestParameters>(parameters);
-  ::planning_interface::MotionPlanRequest request = planning_component->getMotionPlanRequest(*const_parameters);
-
-  // Set start state
-  planning_scene->setCurrentState(request.start_state);
-
-  // Get all pipelines
-  auto pipelines = moveit_cpp_ptr->getPlanningPipelines();
-
-  // Release GIL to allow for true multi-threading
-  py::gil_scoped_release release;
-
-  RCLCPP_INFO(getLogger(), "Releasing GIL");
-
-  // Run planning attempt
-  return moveit::planning_pipeline_interfaces::planWithSinglePipeline(request, planning_scene, pipelines);
-}
-
-planning_interface::MotionPlanResponse
-plan(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-     std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr,
-     std::shared_ptr<moveit_cpp::PlanningComponent::PlanRequestParameters>& single_plan_parameters,
-     std::shared_ptr<moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters>& multi_plan_parameters,
+plan(moveit_cpp::PlanningComponent& planning_component, const moveit_cpp::MoveItCpp& moveit_cpp_ptr,
+     std::shared_ptr<const moveit_cpp::PlanningComponent::PlanRequestParameters>& single_plan_parameters,
+     std::shared_ptr<const moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters>& multi_plan_parameters,
      std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
-     std::optional<const moveit::planning_pipeline_interfaces::SolutionSelectionFunction> solution_selection_function,
-     std::optional<moveit::planning_pipeline_interfaces::StoppingCriterionFunction> stopping_criterion_callback)
+     const std::optional<moveit::planning_pipeline_interfaces::SolutionSelectionFunction> solution_selection_function,
+     const std::optional<moveit::planning_pipeline_interfaces::StoppingCriterionFunction> stopping_criterion_callback)
 {
   // parameter argument checking
   if (single_plan_parameters && multi_plan_parameters)
@@ -130,38 +62,30 @@ plan(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
   if (single_plan_parameters)
   {
     RCLCPP_INFO(getLogger(), "Single plan parameters");
-    // cast parameters
 
-    return planNoGIL(planning_component, moveit_cpp_ptr, single_plan_parameters, planning_scene);
+    return planning_component.plan(*single_plan_parameters, planning_scene);
   }
   else if (multi_plan_parameters)
   {
-    // cast parameters
-    std::shared_ptr<const moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters> const_multi_plan_parameters =
-        std::const_pointer_cast<const moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters>(
-            multi_plan_parameters);
-
     if (solution_selection_function && stopping_criterion_callback)
     {
-      return planning_component->plan(*const_multi_plan_parameters, std::ref(*solution_selection_function),
-                                      *stopping_criterion_callback, planning_scene);
+      return planning_component.plan(*multi_plan_parameters, std::ref(*solution_selection_function),
+                                     *stopping_criterion_callback, planning_scene);
     }
     else if (solution_selection_function)
     {
-      return planning_component->plan(*const_multi_plan_parameters, std::ref(*solution_selection_function), nullptr,
-                                      planning_scene);
+      return planning_component.plan(*multi_plan_parameters, std::ref(*solution_selection_function), nullptr,
+                                     planning_scene);
     }
     else if (stopping_criterion_callback)
     {
-      return planning_component->plan(*const_multi_plan_parameters,
-                                      moveit::planning_pipeline_interfaces::getShortestSolution,
-                                      *stopping_criterion_callback, planning_scene);
+      return planning_component.plan(*multi_plan_parameters, moveit::planning_pipeline_interfaces::getShortestSolution,
+                                     *stopping_criterion_callback, planning_scene);
     }
     else
     {
-      return planning_component->plan(*const_multi_plan_parameters,
-                                      moveit::planning_pipeline_interfaces::getShortestSolution, nullptr,
-                                      planning_scene);
+      return planning_component.plan(*multi_plan_parameters, moveit::planning_pipeline_interfaces::getShortestSolution,
+                                     nullptr, planning_scene);
     }
   }
   else
@@ -171,17 +95,17 @@ plan(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
       throw std::invalid_argument("Cannot specify planning scene without specifying plan parameters");
     }
     RCLCPP_INFO(getLogger(), "No plan parameters");
-    std::shared_ptr<moveit_cpp::PlanningComponent::PlanRequestParameters> plan_request_parameters =
-        std::make_shared<moveit_cpp::PlanningComponent::PlanRequestParameters>();
-    plan_request_parameters->load(moveit_cpp_ptr->getNode());
-    return planNoGIL(planning_component, moveit_cpp_ptr, plan_request_parameters, planning_scene);
+    moveit_cpp::PlanningComponent::PlanRequestParameters plan_request_parameters;
+    plan_request_parameters.load(moveit_cpp_ptr.getNode());
+    return planning_component.plan(plan_request_parameters, planning_scene);
   }
 }
 
-bool setGoal(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-             std::optional<std::string> configuration_name, std::optional<moveit::core::RobotState> robot_state,
-             std::optional<geometry_msgs::msg::PoseStamped> pose_stamped_msg, std::optional<std::string> pose_link,
-             std::optional<std::vector<moveit_msgs::msg::Constraints>> motion_plan_constraints)
+bool setGoal(moveit_cpp::PlanningComponent& planning_component, const std::optional<std::string> configuration_name,
+             const std::optional<moveit::core::RobotState> robot_state,
+             const std::optional<geometry_msgs::msg::PoseStamped> pose_stamped_msg,
+             const std::optional<std::string> pose_link,
+             const std::optional<std::vector<moveit_msgs::msg::Constraints>> motion_plan_constraints)
 {
   // check that no more than one argument is specified
   if (configuration_name && robot_state)
@@ -222,27 +146,28 @@ bool setGoal(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
   // 1. set goal from configuration name
   if (configuration_name)
   {
-    return planning_component->setGoal(*configuration_name);
+    return planning_component.setGoal(*configuration_name);
   }
   // 2. set goal from robot_state
   else if (robot_state)
   {
-    return planning_component->setGoal(*robot_state);
+    return planning_component.setGoal(*robot_state);
   }
   // 3. set goal from pose_goal
   else if (pose_stamped_msg && pose_link)
   {
-    return planning_component->setGoal(*pose_stamped_msg, *pose_link);
+    return planning_component.setGoal(*pose_stamped_msg, *pose_link);
   }
   // 4. set goal from motion_plan_constraints
   else
   {
-    return planning_component->setGoal(*motion_plan_constraints);
+    return planning_component.setGoal(*motion_plan_constraints);
   }
 }
 
-bool setStartState(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-                   std::optional<std::string> configuration_name, std::optional<moveit::core::RobotState> robot_state)
+bool setStartState(moveit_cpp::PlanningComponent& planning_component,
+                   const std::optional<std::string> configuration_name,
+                   const std::optional<moveit::core::RobotState> robot_state)
 {
   // check that no more than one argument is specified
   if (configuration_name && robot_state)
@@ -259,12 +184,12 @@ bool setStartState(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_comp
   // 1. set start state from configuration name
   if (configuration_name)
   {
-    return planning_component->setStartState(*configuration_name);
+    return planning_component.setStartState(*configuration_name);
   }
   // 2. set start state from robot_state
   else
   {
-    return planning_component->setStartState(*robot_state);
+    return planning_component.setStartState(*robot_state);
   }
 }
 
@@ -374,20 +299,14 @@ void initPlanningComponent(py::module& m)
                robot_state (:py:class:`moveit_msgs.msg.RobotState`): The robot state to use as the start state.
            )")
 
-      .def("get_start_state", &moveit_cpp::PlanningComponent::getStartState,
-           py::return_value_policy::reference_internal,
+      .def("get_start_state", &moveit_cpp::PlanningComponent::getStartState, py::call_guard<py::gil_scoped_release>(),
            R"(
            Returns the current start state for the planning component.
            )")
 
       // goal state methods
-      .def("set_goal_state",
-           py::overload_cast<std::shared_ptr<moveit_cpp::PlanningComponent>&, std::optional<std::string>,
-                             std::optional<moveit::core::RobotState>, std::optional<geometry_msgs::msg::PoseStamped>,
-                             std::optional<std::string>, std::optional<std::vector<moveit_msgs::msg::Constraints>>>(
-               &moveit_py::bind_planning_component::setGoal),
-           py::arg("configuration_name") = nullptr, py::arg("robot_state") = nullptr,
-           py::arg("pose_stamped_msg") = nullptr, py::arg("pose_link") = nullptr,
+      .def("set_goal_state", &moveit_py::bind_planning_component::setGoal, py::arg("configuration_name") = nullptr,
+           py::arg("robot_state") = nullptr, py::arg("pose_stamped_msg") = nullptr, py::arg("pose_link") = nullptr,
            py::arg("motion_plan_constraints") = nullptr,
            R"(
            Set the goal state for the planning component.
@@ -406,7 +325,7 @@ void initPlanningComponent(py::module& m)
       .def("plan", &moveit_py::bind_planning_component::plan, py::arg("moveit_cpp_ptr"),
            py::arg("single_plan_parameters") = nullptr, py::arg("multi_plan_parameters") = nullptr,
            py::arg("planning_scene") = nullptr, py::arg("solution_selection_function") = nullptr,
-           py::arg("stopping_criterion_callback") = nullptr, py::return_value_policy::move,
+           py::arg("stopping_criterion_callback") = nullptr, py::call_guard<py::gil_scoped_release>(),
            R"(
            Plan a motion plan using the current start and goal states.
 
@@ -415,7 +334,6 @@ void initPlanningComponent(py::module& m)
            )")
 
       .def("set_path_constraints", &moveit_cpp::PlanningComponent::setPathConstraints, py::arg("path_constraints"),
-           py::return_value_policy::move,
            R"(
            Set the path constraints generated from a moveit msg Constraints.
 

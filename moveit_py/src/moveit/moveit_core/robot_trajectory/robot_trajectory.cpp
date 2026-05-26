@@ -42,26 +42,21 @@ namespace moveit_py
 {
 namespace bind_robot_trajectory
 {
-moveit_msgs::msg::RobotTrajectory
-getRobotTrajectoryMsg(const robot_trajectory::RobotTrajectoryConstPtr& robot_trajectory,
-                      const std::vector<std::string>& joint_filter)
+moveit_msgs::msg::RobotTrajectory getRobotTrajectoryMsg(const robot_trajectory::RobotTrajectory& robot_trajectory,
+                                                        const std::vector<std::string>& joint_filter)
 {
   moveit_msgs::msg::RobotTrajectory msg;
-  robot_trajectory->getRobotTrajectoryMsg(msg, joint_filter);
+  robot_trajectory.getRobotTrajectoryMsg(msg, joint_filter);
   return msg;
 }
 
-robot_trajectory::RobotTrajectory
-setRobotTrajectoryMsg(const std::shared_ptr<robot_trajectory::RobotTrajectory>& robot_trajectory,
-                      const moveit::core::RobotState& robot_state, const moveit_msgs::msg::RobotTrajectory& msg)
-{
-  return robot_trajectory->setRobotTrajectoryMsg(robot_state, msg);
-}
+robot_trajectory::RobotTrajectory setRobotTrajectoryMsg(robot_trajectory::RobotTrajectory& robot_trajectory,
+                                                        const moveit::core::RobotState& robot_state,
+                                                        const moveit_msgs::msg::RobotTrajectory& msg)
+{ return robot_trajectory.setRobotTrajectoryMsg(robot_state, msg); }
 
 bool lessThan(const robot_trajectory::RobotTrajectory& self, const robot_trajectory::RobotTrajectory& other)
-{
-  return robot_trajectory::pathLength(self) < robot_trajectory::pathLength(other);
-}
+{ return robot_trajectory::pathLength(self) < robot_trajectory::pathLength(other); }
 
 void initRobotTrajectory(py::module& m)
 {
@@ -159,6 +154,7 @@ void initRobotTrajectory(py::module& m)
       .def("apply_totg_time_parameterization", &trajectory_processing::applyTOTGTimeParameterization,
            py::arg("velocity_scaling_factor"), py::arg("acceleration_scaling_factor"), py::kw_only(),
            py::arg("path_tolerance") = 0.1, py::arg("resample_dt") = 0.1, py::arg("min_angle_change") = 0.001,
+           py::call_guard<py::gil_scoped_release>(),
            R"(
            Adds time parameterization to the trajectory using the Time-Optimal Trajectory Generation (TOTG) algorithm.
 
@@ -173,7 +169,7 @@ void initRobotTrajectory(py::module& m)
            )")
       .def("apply_ruckig_smoothing", &trajectory_processing::applyRuckigSmoothing, py::arg("velocity_scaling_factor"),
            py::arg("acceleration_scaling_factor"), py::kw_only(), py::arg("mitigate_overshoot") = false,
-           py::arg("overshoot_threshold") = 0.01,
+           py::arg("overshoot_threshold") = 0.01, py::call_guard<py::gil_scoped_release>(),
            R"(
            Applies Ruckig smoothing to the trajectory.
 

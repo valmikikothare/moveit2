@@ -73,8 +73,7 @@ void initRobotModel(py::module& m)
              srdf_model.initFile(*urdf_model, srdf_xml_path);
 
              // Instantiate robot model
-             return std::make_shared<moveit::core::RobotModel>(
-                 urdf_model, std::make_shared<const srdf::Model>(std::move(srdf_model)));
+             return moveit::core::RobotModel(urdf_model, std::make_shared<const srdf::Model>(std::move(srdf_model)));
            }),
            py::arg("urdf_xml_path"), py::arg("srdf_xml_path"),
            R"(
@@ -113,7 +112,6 @@ void initRobotModel(py::module& m)
             s->printModelInfo(ss);
             return ss.str();
           },
-          py::return_value_policy::move,
           R"(
           Gets a formatted string containing a summary of relevant information from the robot model.
           Returns:

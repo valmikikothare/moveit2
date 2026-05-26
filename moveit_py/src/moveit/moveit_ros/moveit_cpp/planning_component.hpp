@@ -58,27 +58,24 @@ namespace moveit_py
 {
 namespace bind_planning_component
 {
-planning_interface::MotionPlanResponse
-planNoGIL(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-          std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr,
-          std::shared_ptr<moveit_cpp::PlanningComponent::PlanRequestParameters>& parameters);
 
 planning_interface::MotionPlanResponse
-plan(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-     std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr,
-     std::shared_ptr<moveit_cpp::PlanningComponent::PlanRequestParameters>& single_plan_parameters,
-     std::shared_ptr<moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters>& multi_plan_parameters,
+plan(moveit_cpp::PlanningComponent& planning_component, const moveit_cpp::MoveItCpp& moveit_cpp_ptr,
+     std::shared_ptr<const moveit_cpp::PlanningComponent::PlanRequestParameters>& single_plan_parameters,
+     std::shared_ptr<const moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters>& multi_plan_parameters,
      std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
-     std::optional<const moveit::planning_pipeline_interfaces::SolutionSelectionFunction> solution_selection_function,
-     std::optional<moveit::planning_pipeline_interfaces::StoppingCriterionFunction> stopping_criterion_callback);
+     const std::optional<moveit::planning_pipeline_interfaces::SolutionSelectionFunction> solution_selection_function,
+     const std::optional<moveit::planning_pipeline_interfaces::StoppingCriterionFunction> stopping_criterion_callback);
 
-bool setGoal(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-             std::optional<std::string> configuration_name, std::optional<moveit::core::RobotState> robot_state,
-             std::optional<geometry_msgs::msg::PoseStamped> pose_stamped_msg, std::optional<std::string> pose_link,
-             std::optional<std::vector<moveit_msgs::msg::Constraints>> motion_plan_constraints);
+bool setGoal(moveit_cpp::PlanningComponent& planning_component, const std::optional<std::string> configuration_name,
+             const std::optional<moveit::core::RobotState> robot_state,
+             const std::optional<geometry_msgs::msg::PoseStamped> pose_stamped_msg,
+             const std::optional<std::string> pose_link,
+             const std::optional<std::vector<moveit_msgs::msg::Constraints>> motion_plan_constraints);
 
-bool setStartState(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-                   std::optional<std::string> configuration_name, std::optional<moveit::core::RobotState> robot_state);
+bool setStartState(moveit_cpp::PlanningComponent& planning_component,
+                   const std::optional<std::string> configuration_name,
+                   const std::optional<moveit::core::RobotState> robot_state);
 
 void initPlanRequestParameters(py::module& m);
 

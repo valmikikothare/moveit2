@@ -44,15 +44,11 @@ namespace moveit_py
 namespace bind_moveit_cpp
 {
 rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.py.cpp_initializer");
-}
+{ return moveit::getLogger("moveit.py.cpp_initializer"); }
 
 std::shared_ptr<moveit_cpp::PlanningComponent>
-getPlanningComponent(std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr, const std::string& planning_component)
-{
-  return std::make_shared<moveit_cpp::PlanningComponent>(planning_component, moveit_cpp_ptr);
-}
+getPlanningComponent(const std::shared_ptr<moveit_cpp::MoveItCpp>& moveit_cpp_ptr, const std::string& planning_component)
+{ return std::make_shared<moveit_cpp::PlanningComponent>(planning_component, moveit_cpp_ptr); }
 
 void initMoveitPy(py::module& m)
 {
@@ -164,39 +160,37 @@ void initMoveitPy(py::module& m)
       .def("execute",
            py::overload_cast<const robot_trajectory::RobotTrajectoryPtr&, const std::vector<std::string>&>(
                &moveit_cpp::MoveItCpp::execute),
-           py::arg("robot_trajectory"), py::arg("controllers"), py::call_guard<py::gil_scoped_release>(),
+           py::call_guard<py::gil_scoped_release>(), py::arg("robot_trajectory"), py::arg("controllers"),
            R"(
-	   Execute a trajectory (planning group is inferred from robot trajectory object).
-	   )")
+           Execute a trajectory (planning group is inferred from robot trajectory object).
+           )")
       .def("get_planning_component", &moveit_py::bind_moveit_cpp::getPlanningComponent,
-           py::arg("planning_component_name"), py::return_value_policy::take_ownership,
+           py::arg("planning_component_name"),
            R"(
            Creates a planning component instance.
            Args:
                planning_component_name (str): The name of the planning component.
            Returns:
                :py:class:`moveit_py.planning.PlanningComponent`: A planning component instance corresponding to the provided plan component name.
-          )")
+           )")
 
       .def(
-          "shutdown", [](std::shared_ptr<moveit_cpp::MoveItCpp>& /*moveit_cpp*/) { rclcpp::shutdown(); },
+          "shutdown", [](const moveit_cpp::MoveItCpp& /*moveit_cpp*/) { rclcpp::shutdown(); },
           R"(
           Shutdown the moveit_cpp node.
           )")
 
       .def("get_planning_scene_monitor", &moveit_cpp::MoveItCpp::getPlanningSceneMonitorNonConst,
-           py::return_value_policy::reference,
            R"(
            Returns the planning scene monitor.
            )")
 
       .def("get_trajectory_execution_manager", &moveit_cpp::MoveItCpp::getTrajectoryExecutionManagerNonConst,
-           py::return_value_policy::reference,
            R"(
            Returns the trajectory execution manager.
            )")
 
-      .def("get_robot_model", &moveit_cpp::MoveItCpp::getRobotModel, py::return_value_policy::reference,
+      .def("get_robot_model", &moveit_cpp::MoveItCpp::getRobotModel,
            R"(
            Returns robot model.
         )");

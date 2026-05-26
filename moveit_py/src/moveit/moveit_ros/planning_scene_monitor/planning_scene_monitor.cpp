@@ -41,38 +41,34 @@ namespace moveit_py
 namespace bind_planning_scene_monitor
 {
 
-bool processCollisionObject(const planning_scene_monitor::PlanningSceneMonitorPtr& planning_scene_monitor,
-                            moveit_msgs::msg::CollisionObject& collision_object_msg,
-                            std::optional<moveit_msgs::msg::ObjectColor> color_msg)
+bool processCollisionObject(planning_scene_monitor::PlanningSceneMonitor& planning_scene_monitor,
+                            const moveit_msgs::msg::CollisionObject& collision_object_msg,
+                            const std::optional<moveit_msgs::msg::ObjectColor> color_msg)
 {
   moveit_msgs::msg::CollisionObject::ConstSharedPtr const_ptr =
       std::make_shared<const moveit_msgs::msg::CollisionObject>(collision_object_msg);
   if (color_msg)
   {
-    return planning_scene_monitor->processCollisionObjectMsg(const_ptr, *std::move(color_msg));
+    return planning_scene_monitor.processCollisionObjectMsg(const_ptr, color_msg);
   }
-  return planning_scene_monitor->processCollisionObjectMsg(const_ptr);
+  return planning_scene_monitor.processCollisionObjectMsg(const_ptr);
 }
 
-bool processAttachedCollisionObjectMsg(const planning_scene_monitor::PlanningSceneMonitorPtr& planning_scene_monitor,
+bool processAttachedCollisionObjectMsg(planning_scene_monitor::PlanningSceneMonitor& planning_scene_monitor,
                                        moveit_msgs::msg::AttachedCollisionObject& attached_collision_object_msg)
 {
   moveit_msgs::msg::AttachedCollisionObject::ConstSharedPtr const_ptr =
       std::make_shared<const moveit_msgs::msg::AttachedCollisionObject>(attached_collision_object_msg);
-  return planning_scene_monitor->processAttachedCollisionObjectMsg(const_ptr);
+  return planning_scene_monitor.processAttachedCollisionObjectMsg(const_ptr);
 }
 
 LockedPlanningSceneContextManagerRO
 readOnly(const planning_scene_monitor::PlanningSceneMonitorPtr& planning_scene_monitor)
-{
-  return LockedPlanningSceneContextManagerRO(planning_scene_monitor);
-};
+{ return LockedPlanningSceneContextManagerRO(planning_scene_monitor); };
 
 LockedPlanningSceneContextManagerRW
 readWrite(const planning_scene_monitor::PlanningSceneMonitorPtr& planning_scene_monitor)
-{
-  return LockedPlanningSceneContextManagerRW(planning_scene_monitor);
-};
+{ return LockedPlanningSceneContextManagerRW(planning_scene_monitor); };
 
 const planning_scene::PlanningSceneConstPtr& LockedPlanningSceneContextManagerRO::lockedPlanningSceneRoEnter() const
 {
@@ -81,23 +77,17 @@ const planning_scene::PlanningSceneConstPtr& LockedPlanningSceneContextManagerRO
 }
 
 const planning_scene::PlanningScenePtr& LockedPlanningSceneContextManagerRW::lockedPlanningSceneRwEnter()
-{
-  return planning_scene_monitor_->getPlanningScene();
-}
+{ return planning_scene_monitor_->getPlanningScene(); }
 
 void LockedPlanningSceneContextManagerRO::lockedPlanningSceneRoExit(const py::object& /*type*/,
                                                                     const py::object& /*value*/,
                                                                     const py::object& /*traceback*/)
-{
-  ls_ro_.reset();
-}
+{ ls_ro_.reset(); }
 
 void LockedPlanningSceneContextManagerRW::lockedPlanningSceneRwExit(const py::object& /*type*/,
                                                                     const py::object& /*value*/,
                                                                     const py::object& /*traceback*/)
-{
-  ls_rw_.reset();
-}
+{ ls_rw_.reset(); }
 
 void initPlanningSceneMonitor(py::module& m)
 {
@@ -112,6 +102,7 @@ void initPlanningSceneMonitor(py::module& m)
                     )")
 
       .def("update_frame_transforms", &planning_scene_monitor::PlanningSceneMonitor::updateFrameTransforms,
+           py::call_guard<py::gil_scoped_release>(),
            R"(
            Update the transforms for the frames that are not part of the kinematic model using tf.
 
@@ -121,26 +112,30 @@ void initPlanningSceneMonitor(py::module& m)
            )")
 
       .def("start_scene_monitor", &planning_scene_monitor::PlanningSceneMonitor::startSceneMonitor,
+           py::call_guard<py::gil_scoped_release>(),
            R"(
            Starts the scene monitor.
            )")
 
       .def("stop_scene_monitor", &planning_scene_monitor::PlanningSceneMonitor::stopSceneMonitor,
+           py::call_guard<py::gil_scoped_release>(),
            R"(
            Stops the scene monitor.
            )")
 
       .def("start_state_monitor", &planning_scene_monitor::PlanningSceneMonitor::startStateMonitor,
+           py::call_guard<py::gil_scoped_release>(),
            R"(
 	   Starts the state monitor.
 	   )")
 
       .def("stop_state_monitor", &planning_scene_monitor::PlanningSceneMonitor::stopStateMonitor,
+           py::call_guard<py::gil_scoped_release>(),
            R"(
 	       Stops the state monitor.
 	   )")
       .def("request_planning_scene_state", &planning_scene_monitor::PlanningSceneMonitor::requestPlanningSceneState,
-           py::arg("service_name"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("service_name"),
            R"(
 	       Request the planning scene.
 
@@ -159,7 +154,7 @@ void initPlanningSceneMonitor(py::module& m)
            Clears the octomap.
            )")
       .def("process_collision_object", &moveit_py::bind_planning_scene_monitor::processCollisionObject,
-           py::arg("collision_object_msg"), py::arg("color_msg") = nullptr,
+           py::call_guard<py::gil_scoped_release>(), py::arg("collision_object_msg"), py::arg("color_msg") = nullptr,
            R"(
            Apply a collision object to the planning scene.
 
@@ -168,7 +163,7 @@ void initPlanningSceneMonitor(py::module& m)
            )")
       .def("process_attached_collision_object",
            &moveit_py::bind_planning_scene_monitor::processAttachedCollisionObjectMsg,
-           py::arg("attached_collision_object_msg"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("attached_collision_object_msg"),
            R"(
            Apply an attached collision object msg to the planning scene.
 
@@ -177,7 +172,7 @@ void initPlanningSceneMonitor(py::module& m)
            )")
 
       .def("new_planning_scene_message", &planning_scene_monitor::PlanningSceneMonitor::newPlanningSceneMessage,
-           py::arg("scene"),
+           py::call_guard<py::gil_scoped_release>(), py::arg("scene"),
            R"(
            Called to update the planning scene with a new message.
 
@@ -227,7 +222,6 @@ void initContextManagers(py::module& m)
 
       .def("__enter__",
            &moveit_py::bind_planning_scene_monitor::LockedPlanningSceneContextManagerRW::lockedPlanningSceneRwEnter,
-           py::return_value_policy::take_ownership,
            R"(
            Special method that is used with the with statement, provides access to a locked plannning scene instance.
            Returns:

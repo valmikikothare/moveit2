@@ -52,24 +52,21 @@ namespace moveit_py
 {
 namespace bind_planning_scene
 {
-void applyCollisionObject(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
-                          moveit_msgs::msg::CollisionObject& collision_object_msg,
-                          std::optional<moveit_msgs::msg::ObjectColor> color_msg);
+void applyCollisionObject(planning_scene::PlanningScene& planning_scene,
+                          const moveit_msgs::msg::CollisionObject& collision_object_msg,
+                          const std::optional<moveit_msgs::msg::ObjectColor> color_msg);
 
-Eigen::MatrixXd getFrameTransform(std::shared_ptr<planning_scene::PlanningScene>& planning_scene, const std::string& id);
+Eigen::MatrixXd getFrameTransform(const planning_scene::PlanningScene& planning_scene, const std::string& id);
 
-moveit_msgs::msg::PlanningScene getPlanningSceneMsg(std::shared_ptr<planning_scene::PlanningScene>& planning_scene);
+moveit_msgs::msg::PlanningScene getPlanningSceneMsg(const planning_scene::PlanningScene& planning_scene);
 
-void allocateCollisionDetector(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
-                               const std::string& collision_detector);
+void allocateCollisionDetector(planning_scene::PlanningScene& planning_scene, const std::string& collision_detector);
+
+bool saveGeometryToFile(const planning_scene::PlanningScene& planning_scene, const std::string& file_path_and_name);
+
+bool loadGeometryFromFile(planning_scene::PlanningScene& planning_scene, const std::string& file_path_and_name);
 
 void initPlanningScene(py::module& m);
-
-bool saveGeometryToFile(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
-                        const std::string& file_path_and_name);
-
-bool loadGeometryFromFile(std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
-                          const std::string& file_path_and_name);
 
 }  // namespace bind_planning_scene
 }  // namespace moveit_py
